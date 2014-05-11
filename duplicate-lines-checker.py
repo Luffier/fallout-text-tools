@@ -77,14 +77,13 @@ for file in thefiles:
 
 if not result:
     result = "Congratulations, there are no duplicate lines!"
-    print(result)
+    print("DONE! " + result)
     with open('result.txt','w') as fresult:
         fresult.write(result)
 
 else:
-    print("There are duplicate lines!")
+    print("DONE! There are duplicate lines!")
     with open('result.txt','w') as fresult:
         fresult.write(result)
 
-print ("\n\nDONE!")
 input()
