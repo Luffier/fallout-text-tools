@@ -13,8 +13,7 @@ The result will be saved into a text file. The script doesn't take into account\
 the index numbers in the dev comments inside the .msg files.\n\
 \n\
 \n\
-Type [y]es and hit enter to proceed or anything else to quit:"
-
+Type [y]es and hit enter to proceed or anything else to quit: "
 
 
 def startcheck():
@@ -27,16 +26,21 @@ def startcheck():
 # Then looks for something like this '{100}{' (or "left curly bracket"; "at least one number"; "right curly bracket"; "left curly bracket"),
 # and returns a list of the numbers between the curly brackets.  
 
+
 def nformat(file):
     rfile = open(file, 'r')
     lines = rfile.readlines()
     lines = [line for line in lines if line.startswith('#') is False]
-    for x in range(len(lines)):
-        if len(re.findall(r'\{([0-9]+)\}', lines[x])) > 1:
-            lines[x] = re.findall(r'\{([0-9]+)\}', lines[x])[0]
+    
+    # if there's an inline comment with an index number it will cut the line leaving only the first one.
+    for line in lines:
+        indexes = re.findall(r'\{([0-9]+)\}', line)
+        if len(indexes) > 1:
+            line = indexes[0]
+            
     lines = ' '.join(lines)
     lines = re.findall(r'\{([0-9]+)\}', lines)
-    lines = [int(e) for e in lines]
+    lines = [int(index) for index in lines]
     rfile.close()
     return lines
 
@@ -52,15 +56,15 @@ print ('\n\nWORKING... \n\n')
 
 
 for file in thefiles:
-    numbers = []
-    numbers = nformat(file)
-    occurrences = [x for x in numbers if numbers.count(x) > 1]
-    if len(occurrences) > 0:
+    indexes = []
+    indexes = nformat(file)
+    matches = [index for index in indexes if indexes.count(index) > 1]
+    if len(matches) > 0:
         result = result + file
-        occurrences.sort()
-        while occurrences != []:
-            result = result + '\n       This file has the index number ' + str(occurrences[0]) + ' repeated ' + str(occurrences.count(occurrences[0])) + ' times!'
-            occurrences[:] = [e for e in occurrences if e != occurrences[0]]
+        matches.sort()
+        while matches != []:
+            result = result + '\n       This file has the index number ' + str(matches[0]) + ' repeated ' + str(matches.count(matches[0])) + ' times!'
+            matches[:] = [match for match in matches if match != matches[0]]
         result = result + '\n\n'
 
 if result == '': 
