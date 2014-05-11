@@ -15,6 +15,10 @@ the index numbers in the dev comments inside the .msg files.\n\
 \n\
 Type [y]es and hit enter to proceed or anything else to quit: "
 
+no_files_msg = "\n\
+There are no .msg files in this directory (the script makes a recursive search).\n\
+Hit enter to quit and try again.\n"
+
 
 def startcheck():
 	inputcheck = input(description).lower()
@@ -45,8 +49,12 @@ def nformat(file):
     return lines
 
     
-    
-startcheck()
+if thefiles:  
+    startcheck()
+else: 
+    print(no_files_msg)
+    input()
+    exit()
 
 
 print ('\n\nWORKING... \n\n')
@@ -62,7 +70,7 @@ for file in thefiles:
     if len(matches) > 0:
         result = result + file
         matches.sort()
-        while matches != []:
+        while matches:
             result = result + '\n       This file has the index number ' + str(matches[0]) + ' repeated ' + str(matches.count(matches[0])) + ' times!'
             matches[:] = [match for match in matches if match != matches[0]]
         result = result + '\n\n'
