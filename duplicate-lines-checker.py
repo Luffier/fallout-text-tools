@@ -57,7 +57,7 @@ else:
     exit()
 
 
-print ('\n\nWORKING... \n\n')
+print ("\n\nWORKING...\n\n")
 
 
 # Runs nformat in every file and then looks for duplicates. If any occurrences are found, they are recorded in the variable result.
@@ -71,19 +71,20 @@ for file in thefiles:
         result = result + file
         matches.sort()
         while matches:
-            result = result + '\n       This file has the index number ' + str(matches[0]) + ' repeated ' + str(matches.count(matches[0])) + ' times!'
+            result = result + "\n       This file has the index number " + str(matches[0]) + " repeated " + str(matches.count(matches[0])) + " times!"
             matches[:] = [match for match in matches if match != matches[0]]
-        result = result + '\n\n'
+        result = result + "\n\n"
 
-if result == '': 
-    print('\nCongratulations, there are no duplicate lines!')
-    fresult = open('result.txt','w')
-    fresult.write('Congratulations, there are no duplicate lines!')
-    fresult.close()
-else:    
-    fresult = open('result.txt','w')
-    fresult.write(result + '\n')
-    fresult.close()
+if not result:
+    result = "Congratulations, there are no duplicate lines!"
+    print(result)
+    with open('result.txt','w') as fresult:
+        fresult.write(result)
+
+else:
+    print("There are duplicate lines!")
+    with open('result.txt','w') as fresult:
+        fresult.write(result)
 
 print ("\n\nDONE!")
 input()
