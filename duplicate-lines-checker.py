@@ -8,9 +8,9 @@ for root, dirnames, filenames in os.walk('.'):
 result = ''
 
 description = "\n\
-This script checks Fallout .msg files for duplicates in the index numbers.\n\
+This script checks Fallout's .msg files for duplicates in the index numbers.\n\
 The result will be saved into a text file. The script doesn't take into account\n\
-the index numbers in the dev comments inside the .msg files.\n\
+the index numbers inside dev comments.\n\
 \n\
 \n\
 Type [y]es and hit enter to proceed or anything else to quit: "
@@ -21,9 +21,9 @@ Hit enter to quit and try again.\n"
 
 
 def startcheck():
-	inputcheck = input(description).lower()
-	if inputcheck in ('yes','y'): pass
-	else: exit()
+    inputcheck = input(description).lower()
+    if inputcheck in ('yes','y'): pass
+    else: exit()
 
 
 # The nformat funtion opens and reads a file (parameter), and creates a string based in its content, ignoring lines that start with "#" (dev comments).  
