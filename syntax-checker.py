@@ -4,20 +4,16 @@ thefiles = []
 for root, dirnames, filenames in os.walk('.'):
     for filename in fnmatch.filter(filenames, '*.msg'):
         thefiles.append(os.path.join(root, filename))
-      
-      
-j = '\n'
-s = '='
-b = ' '
-currentp = 0
-result = ''
-files_left = len(thefiles)
 
+result = ''
 
 description = "\n\
 This script opens Fallout's .msg files, checks the syntax (open curly brackets)\n\
-and saves a reference for any error found in a text file called 'result.txt'.\n\
-Remember that big files (more than 1000 lines) will take much more time.\n\
+and saves a reference for any error found in a text file called 'SC-result'\n\
+This version is much quicker and reliable but any line break inside brackets\n\
+or dev comments that don't start with the usual number sign will raise\n\
+a false positive. Use the line break remover to minimaze the false positives.\n\
+You'll have to solve the problem manually, using the output text as reference.\n\
 \n\
 \n\
 Type [y]es and hit enter to proceed or anything else to quit: "
@@ -25,6 +21,9 @@ Type [y]es and hit enter to proceed or anything else to quit: "
 no_files_msg = "\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\
 Hit enter to quit and try again.\n"
+
+help_msg = 174*"*" + "\n  Less tran three pairs of brackets: line break inside brackets (false positive), dev comment without number sign (ugly) or missing bracket/s (it would have cause a crash!)  \n\
+  More than three pairs of brackets: inline dev comment with brackets or two lines in one (not fatal but ugly)  \n" + 174*"*" + "\n\n\n"
 
 
 def startcheck():
@@ -42,55 +41,45 @@ else:
 print ('\n\nWORKING...\n\n')
 
 for file in thefiles:
-
-    filename = file[::-1] # reverse the filename (currently a path)
-    filename = filename[:filename.index('\\')] # removes everything until the last slash, leaviang only the filename
-    filename = filename[::-1] # reverse again
     
-    header = (len(filename)+32)*s + j + 12*s + filename + "  BEGINS" + 12*s + j + (len(filename)+32)*s + 4*j
+    occurrence = False
     
-    openedfile = open(file, 'r')
-    text = openedfile.read()
-    characters = list(text)
+    with open(file, 'r') as rfile:
+        lines = rfile.readlines()
     
-    #currentp represents the current position of the character being processed
-    while characters[currentp:]:
-        if characters[currentp] == '{':
-            currentp = currentp + 1
-            while characters[currentp:]:
-                if characters[currentp] == '}':
-                    currentp = currentp + 1
-                    break
-                elif characters[currentp] == '{':
-                    result = result + header + text[:currentp] + "<-- ERROR HERE \n\n\n\n\n"
-                    break
-                else: 
-                    currentp = currentp + 1
-                    if not characters[currentp:]:
-                        result = result + header + text[:currentp] + "<-- ERROR HERE \n\n\n\n\n"
-                        break
-        elif characters[currentp] == '}':
-            currentp = currentp + 1
-            result = result + header + text[:currentp] + "<-- ERROR HERE \n\n\n\n\n"
-        else:
-            currentp = currentp + 1
-    currentp = 0
-    files_left = files_left - 1
-    openedfile.close()
     
-    fbars = 43-len(filename) # bars to give a nice looking format
-    print (filename + " CHECKED " + "-"*fbars + '>  ' + str(files_left) + " files left.")
+    lines = [line for line in lines if line.startswith('#') is False]
+    lines = [line for line in lines if line != '\n']
+    lines = [line for line in lines if line]
+    
+    for line in lines:
+        brackets = [character for character in line if character in ('{','}')]
+        brackets = ''.join(brackets)
+        pairs = re.findall(r'\{\}', brackets)
+        
+        if len(pairs) != 3 and occurrence == False:
+            occurrence = True
+            result = result + file + "\n"
+            
+        if len(pairs) < 3:
+            result = result + "        Less tran three pairs -->   " + "'" + line.replace('\n','') + "'\n"
+            
+        elif len(pairs) > 3:
+            result = result + "        More than three pairs -->   " + "'" + line.replace('\n','') + "'\n"
+    
+    if occurrence == True:
+        result = result + "\n\n"
+    
+    occurrence = False
 
 if not result:
     result = "\n\nDONE! All files have correct syntax!"
     print (result)
-    with open('result.txt','w') as fresult:
-        fresult.write(result)
-        
+
 else:
-    result = "Look for the 'ERROR HERE' lines to find where the errors are located.\n\n\n" + result
+    result = help_msg + result
     print ("\n\nDONE! There are syntax errors!")
-    with open('result.txt','w') as fresult:
+    with open('SC-result.txt','w') as fresult:
         fresult.write(result)
 
 input()
