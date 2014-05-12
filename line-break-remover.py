@@ -11,15 +11,16 @@ thefiles[:] = [file for file in thefiles if not file.lower().endswith(('fke_dude
 description = "\n\
 This script opens Fallout .msg files, looks for break lines,\n\
 removes them and saves the changes (with the same directory structure)\n\
-in a directory called 'out'. fke_dude.msg and deadcomp.msg excluded.\n\
+in a directory called 'out'. This will also remove unnecessary spaces.\n\
+Both fke_dude.msg and deadcomp.msg are excluded.\n\
 \n\
 \n\
 Type [y]es and hit enter to proceed or anything else to quit: "
 
+
 no_files_msg = "\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\
 Hit enter to quit and try again.\n"
-
 
 def startcheck():
     inputcheck = input(description).lower()
@@ -37,7 +38,7 @@ def createdirs():
         dirpath = '.\\out' + dirpath[1:]
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
-
+            
 
 if thefiles:
     startcheck()
@@ -48,31 +49,46 @@ else:
 
 createdirs()
 
-print ("\n\nWORKING... \n\n")
+print ("\n\nWORKING...\n\n")
 
 for file in thefiles:
-    filename = file[::-1]
-    filename = filename[:filename.index('\\')]
-    filename = filename[::-1]
-    outpathf = '.\\out' + file[1:]
+
+    fileout_path = '.\\out' + file[1:]
     
     with open(file, 'r') as filein:
         lines = filein.readlines()
         
-    fileout = open(outpathf, 'w')
+    fileout = open(fileout_path, 'w')
     
     for line in lines:
-        ma = re.findall(r'\#',line) #line with inline dev commet
-        mb = re.findall(r'\}$',line)
+        
+        m1 = re.findall(r'\}[ ]*$',line) #not empty for normal -single- lines
+        m2 = re.findall(r'\}[ ]*\#.*$',line) #not empty for lines with inline dev comments
+        
+        #removes any space after the final closing bracket
+        line = re.sub(r'(\})[ ]*$', r'\1', line)
+            
+        #dev comment line
         if line.startswith('#'):
             fileout.write(line)
+            
+        #line with inline dev comment; could be merge with the above
+        elif m2:
+            #removes any space after the inline dev comment
+            line = re.sub(r'[ ]*$', '', line)
+            fileout.write(line)
+        
+        #needed for some reason
         elif line == '\n':
             fileout.write('\n')
-        elif ma:
-            fileout.write(line)
-        elif not mb:
+        
+        #line with an open bracket and a line break (main goal)
+        elif not m1:
             fileout.write(line.replace('\n',''))
-        else: fileout.write(line)
+
+        #write if it doesn't fit the above categories
+        else: 
+            fileout.write(line)
     
     fileout.close()
 
