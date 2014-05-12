@@ -12,7 +12,7 @@ This script opens Fallout's .msg files, checks the syntax (open curly brackets)\
 and saves a reference for any error found in a text file called 'SC-result'\n\
 This version is much quicker and reliable but any line break inside brackets\n\
 or dev comments that don't start with the usual number sign will raise\n\
-a false positive. Use the line break remover to minimaze the false positives.\n\
+a false positive. Use the line-break-remover to minimaze the false positives.\n\
 You'll have to solve the problem manually, using the output text as reference.\n\
 \n\
 \n\
@@ -38,7 +38,7 @@ else:
     input()
     exit()
 
-print ('\n\nWORKING...\n\n')
+print ("\n\nWORKING...\n\n")
 
 for file in thefiles:
     
