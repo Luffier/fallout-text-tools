@@ -9,8 +9,8 @@ result = ''
 
 description = "\n\
 This script checks Fallout's .msg files for duplicates in the index numbers.\n\
-The result will be saved into a text file. The script doesn't take into account\n\
-the index numbers inside dev comments.\n\
+The result will be saved into a text file called 'DLC-result'. \n\
+The script doesn't take into account the index numbers inside dev comments.\n\
 \n\
 \n\
 Type [y]es and hit enter to proceed or anything else to quit: "
@@ -32,8 +32,10 @@ def startcheck():
 
 
 def nformat(file):
-    rfile = open(file, 'r')
-    lines = rfile.readlines()
+
+    with open(file, 'r') as rfile:
+        lines = rfile.readlines()
+    
     lines = [line for line in lines if line.startswith('#') is False]
     
     # if there's an inline comment with an index number it will cut the line leaving only the first one.
@@ -45,7 +47,7 @@ def nformat(file):
     lines = ' '.join(lines)
     lines = re.findall(r'\{([0-9]+)\}', lines)
     lines = [int(index) for index in lines]
-    rfile.close()
+    
     return lines
 
     
@@ -78,12 +80,10 @@ for file in thefiles:
 if not result:
     result = "Congratulations, there are no duplicate lines!"
     print("DONE! " + result)
-    with open('result.txt','w') as fresult:
-        fresult.write(result)
 
 else:
     print("DONE! There are duplicate lines!")
-    with open('result.txt','w') as fresult:
+    with open('DLR-result.txt','w') as fresult:
         fresult.write(result)
 
 input()
