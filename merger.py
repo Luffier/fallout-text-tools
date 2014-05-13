@@ -29,7 +29,7 @@ des_comments = '\nDo you want to include developer comments (# lines)? '
 des_indices = '\nDo you want to include the index number to each line (for reference; recommended)? '
 des_names = '\nDo you want to include the name of the file to each line (for reference; recommended)? '
 des_hf = '\nDo you want to include a header and footer to each block of text? '
-des_dic = '\nDo you want to generate a dictionary for MS Word? '
+des_dic = '\nDo you want to generate a dictionary for MS Word (little use)? '
 
 
 
