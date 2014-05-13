@@ -51,6 +51,9 @@ createdirs()
 
 print ("\n\nWORKING...\n\n")
 
+deleted_spaces = 0
+deleted_linebreaks = 0
+
 for file in thefiles:
 
     fileout_path = '.\\out' + file[1:]
@@ -62,18 +65,29 @@ for file in thefiles:
     
     for line in lines:
         
-        m1 = re.findall(r'\}[ ]*$',line) #not empty for normal -single- lines
-        m2 = re.findall(r'\}[ ]*\#.*$',line) #not empty for lines with inline dev comments
+        m1 = re.findall(r'\}[ ]*$', line) #not empty for normal -single- lines
+        m2 = re.findall(r'\}[ ]*\#.*$', line) #not empty for lines with inline dev comments
+        
+        #counts the number of unnecessary spaces before deleting them
+        spaces = re.findall(r'\}([ ]*)$', line)
+        if spaces:
+            deleted_spaces = deleted_spaces + len(spaces[0])
         
         #removes any space after the final closing bracket
         line = re.sub(r'(\})[ ]*$', r'\1', line)
-            
+   
         #dev comment line
         if line.startswith('#'):
             fileout.write(line)
             
         #line with inline dev comment; could be merge with the above
         elif m2:
+            
+            #counts the number of unnecessary spaces before deleting them
+            spaces = re.findall(r'([ ]*)$', line)
+            if spaces:
+                deleted_spaces = deleted_spaces + len(spaces[0])
+
             #removes any space after the inline dev comment
             line = re.sub(r'[ ]*$', '', line)
             fileout.write(line)
@@ -85,12 +99,16 @@ for file in thefiles:
         #line with an open bracket and a line break (main goal)
         elif not m1:
             fileout.write(line.replace('\n',''))
+            deleted_linebreaks = deleted_linebreaks + 1
 
         #write if it doesn't fit the above categories
         else: 
             fileout.write(line)
     
     fileout.close()
+    
+print('Line breaks toll          ' , deleted_linebreaks)
+print('Unnecessary spaces toll   ' , deleted_spaces)
 
-print ("DONE!")
+print ("\n\nDONE!")
 input()
