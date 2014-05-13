@@ -87,7 +87,7 @@ for file in thefiles:
     filename = filename[:filename.index('\\')]
     filename = filename[::-1]
     header = (len(filename)+32)*bar + jump + 12*bar + filename + '  BEGINS' + 12*bar + jump + (len(filename)+32)*bar + 4*jump
-    footer = 4*jump +(len(filename)+32)*bar + jump + 12*bar + filename + '  ENDS' + 14*bar + jump + (len(filename)+32)*bar + 2*jump
+    footer = 3*jump +(len(filename)+32)*bar + jump + 12*bar + filename + '  ENDS' + 14*bar + jump + (len(filename)+32)*bar + 2*jump
     
     if dic:
         dic_result = dic_result + filename + jump + filename.replace('.MSG','') + jump
@@ -97,68 +97,40 @@ for file in thefiles:
         footer = ''
     
     for line in lines:
-        if not comments:
+    
+        if line.startswith('{'):
+            indexm = re.search(r'\{([0-9]*)\}', line)
+            index = line[indexm.start()+1:indexm.end()-1]
+            line = line[:indexm.start()+1] + line[indexm.end()-1:]
             
-            if re.findall(r'^\#', line) == ['#']:
+            if line.endswith('}'): 
+                line = line[:-1]
+            
+            contentm = re.search(r'\}\{(.*)\}\{', line)
+            line = line[contentm.end():-2] + jump
+            
+            if indices and names:
+                line = filename.replace('.MSG','') + space + index + space + line
+            
+            elif indices and not names:
+                line = index + space + line
+            
+            elif not indices and names:
+                line = filename.replace('.MSG','') + space + line
+            
+            elif not indices and not names: 
                 pass
             
-            else:
-                
-                if re.findall(r'^\{', line) == ['{']:
-                   
-                    indexm = re.search(r'\{([0-9]*)\}', line)
-                    index = line[indexm.start()+1:indexm.end()-1]
-                    line = line[:indexm.start()+1] + line[indexm.end()-1:]
-                    if re.search(r'\}$', line) == ['}']: 
-                        line = line[:-1]  
-                    contentm = re.search(r'\}\{(.*)\}\{', line)
-                    line = line[contentm.end():-2] + jump
-                    
-                    if indices and names:
-                        line = filename.replace('.MSG','') + space + index + space + line
-                        
-                    elif indices and not names:
-                        line = index + space + line
-                        
-                    elif not indices and names:
-                        line = filename.replace('.MSG','') + space + line
-                        
-                    elif not indices and not names: 
-                        pass
-                    
-                    result_step = result_step + line
-                    
+            result_step = result_step + line
+        
+        elif line == '\n':
+            break
+        
         elif comments:
-            
-            if re.findall(r'^\{', line) == ['{']:
-            
-                indexm = re.search(r'\{([0-9]*)\}', line)
-                index = line[indexm.start()+1:indexm.end()-1]
-                line = line[:indexm.start()+1] + line[indexm.end()-1:]
-                if re.search(r'\}$', line) == ['}']: 
-                    line = line[:-1]
-                contentm = re.search(r'\}\{(.*)\}\{', line)
-                line = line[contentm.end():-2] + jump
-                
-                if indices and names:
-                    line = filename.replace('.MSG','') + space + index + space + line
-                
-                elif indices and not names:
-                    line = index + space + line
-                
-                elif not indices and names:
-                    line = filename.replace('.MSG','') + space + line
-                
-                elif not indices and not names: 
-                    pass
-                
-                result_step = result_step + line
-            
-            else: 
-                line = filename[:-4] + space + line
-                result_step = result_step + line
-            
-                   
+            line = filename[:-4] + space + line
+            result_step = result_step + line
+
+                    
     result = result + header + result_step + footer
     result_step = ''
     left = left - 1
