@@ -8,23 +8,7 @@ def pathfinder():
         for filename in fnmatch.filter(filenames, '*.msg'):
             filespaths.append(os.path.join(root, filename))
     return filespaths
-
-thefiles = pathfinder()
-excluded = ('fke_dude.msg', 'deadcomp.msg')
-thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
-
-start_msg = "\n\
-This script opens Fallout .msg files, looks for break lines,\n\
-removes them and saves the changes (with the same directory structure)\n\
-in a directory called 'out'. This will also remove unnecessary spaces.\n\
-Both fke_dude.msg and deadcomp.msg are excluded.\n\
-\n\
-\n\
-Type [y]es and hit enter to proceed or anything else to quit: "
-
-no_files_msg = "\n\
-There are no .msg files in this directory (the script makes a recursive search).\n\
-Hit enter to quit and try again.\n"
+    
 
 def startcheck(message):
     inputcheck = input(message).lower()
@@ -44,11 +28,12 @@ def createdirs():
             os.makedirs(dirpath)
 
             
-def line_break_remover():
+def linebreak_remover():
     
+    files_changed = 0
     deleted_spaces = 0
     deleted_linebreaks = 0
-
+    
     for file in thefiles:
         
         fileout_path = '.\\out' + file[1:]
@@ -102,39 +87,56 @@ def line_break_remover():
             else: 
                 fileout_text = fileout_text + line
         
+        
         if fileout_text != filein_reference:
+            
+            files_changed = files_changed +1 
             with open(fileout_path, 'w') as fileout:
                 fileout.write(fileout_text)
+            
     
-    return (len(thefiles), deleted_linebreaks, deleted_spaces)
-    
-    
+    return (len(thefiles), files_changed, deleted_linebreaks, deleted_spaces)
+  
+  
+if __name__ == "__main__":
 
-if thefiles:  
-    startcheck(start_msg)
-else: 
-    print(no_files_msg)
+    start_msg = "\n\
+This script opens Fallout .msg files, looks for break lines,\n\
+removes them and saves the changes (with the same directory structure)\n\
+in a directory called 'out'. This will also remove unnecessary spaces.\n\
+Both fke_dude.msg and deadcomp.msg are excluded.\n\
+\n\
+\n\
+Type [y]es and hit enter to proceed or anything else to quit: "
+
+    no_files_msg = "\n\
+There are no .msg files in this directory (the script makes a recursive search).\n\
+Hit enter to quit and try again.\n"
+
+
+    thefiles = pathfinder()
+    excluded = ('fke_dude.msg', 'deadcomp.msg')
+    thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
+
+    if thefiles:  
+        startcheck(start_msg)
+    else: 
+        print(no_files_msg)
+        input()
+        exit()
+
+    createdirs()
+
+    print ("\n\nWORKING...\n\n")
+
+
+    results = linebreak_remover()
+
+
+    print('Number of files:           ' , results[0])  
+    print('Number of files changed:   ' , results[1])
+    print('Line breaks toll:          ' , results[2])
+    print('Unnecessary spaces toll:   ' , results[3])
+    print ("\n\nDONE!")
+
     input()
-    exit()
-
-    
-createdirs()
-
-
-print ("\n\nWORKING...\n\n")
-
-
-
-results = line_break_remover()
-
-
-
-print('Number of files:           ' , results[0])    
-print('Line breaks toll:          ' , results[1])
-print('Unnecessary spaces toll:   ' , results[2])
-
-print ("\n\nDONE!")
-
-
-
-input()

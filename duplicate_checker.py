@@ -1,21 +1,12 @@
 import os, re, fnmatch
 
-thefiles = []
-for root, dirnames, filenames in os.walk('.'):
-    for filename in fnmatch.filter(filenames, '*.msg'):
-        thefiles.append(os.path.join(root, filename))
 
-start_msg = "\n\
-This script checks Fallout's .msg files for duplicates in the index numbers.\n\
-The result will be saved into a text file called 'dlc-result'. \n\
-The script doesn't take into account the index numbers inside dev comments.\n\
-\n\
-\n\
-Type [y]es and hit enter to proceed or anything else to quit: "
-
-no_files_msg = "\n\
-There are no .msg files in this directory (the script makes a recursive search).\n\
-Hit enter to quit and try again.\n"
+def pathfinder():
+    filespaths = []
+    for root, dirnames, filenames in os.walk('.'):
+        for filename in fnmatch.filter(filenames, '*.msg'):
+            filespaths.append(os.path.join(root, filename))
+    return filespaths
 
 
 def startcheck(message):
@@ -24,7 +15,7 @@ def startcheck(message):
     else: exit()
 
     
-def duplicate_lines_checker(files):
+def duplicate_checker(files):
     
     result = ''
     
@@ -52,32 +43,43 @@ def duplicate_lines_checker(files):
     
     return result
     
-
-
-if thefiles:  
-    startcheck(start_msg)
-else: 
-    print(no_files_msg)
-    input()
-    exit()
-
-
-print ("\n\nWORKING...\n\n")
-
-
-
-output = duplicate_lines_checker(thefiles)
-
-
-
-if not output:
-    print("DONE! Congratulations, there are no duplicate lines!")
     
-else:
-    print("DONE! There are duplicate lines!")
-    with open('dlc-result.txt','w') as foutput:
-        foutput.write(output)
+if __name__ == "__main__":
 
+    start_msg = "\n\
+This script checks Fallout's .msg files for duplicates in the index numbers.\n\
+The result will be saved into a text file called 'dlc-result'. \n\
+The script doesn't take into account the index numbers inside dev comments.\n\
+\n\
+\n\
+Type [y]es and hit enter to proceed or anything else to quit: "
+
+    no_files_msg = "\n\
+There are no .msg files in this directory (the script makes a recursive search).\n\
+Hit enter to quit and try again.\n"
+    
+    
+    thefiles = pathfinder()
+
+    if thefiles:  
+        startcheck(start_msg)
+    else: 
+        print(no_files_msg)
+        input()
+        exit()
+
+    print ("\n\nWORKING...\n\n")
+
+
+    output = duplicate_checker(thefiles)
+
+    if not output:
+        print("DONE! Congratulations, there are no duplicate lines!")
         
-        
-input()
+    else:
+        print("DONE! There are duplicate lines!")
+        with open('dlc-result.txt','w') as foutput:
+            foutput.write(output)
+       
+            
+    input()
