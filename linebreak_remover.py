@@ -47,12 +47,12 @@ def optionscheck(questions):
     return (inputcheck_ex, inputcheck_mode)
 
     
-def dircreator(output_root):
+def dircreator(files, output_root):
     
     if not os.path.exists(output_root):
         os.makedirs(output_root)
     
-    for file in thefiles:       
+    for file in files:       
         
         dirpath = file[::-1]
         dirpath = dirpath[dirpath.index('\\'):]
@@ -63,13 +63,13 @@ def dircreator(output_root):
             os.makedirs(dirpath)
 
 #if allmode is False it will write only files with changes
-def linebreak_remover(output_root, allmode = False):
+def linebreak_remover(files, output_root, allmode = False):
     
     files_changed = 0
     deleted_spaces = 0
     deleted_linebreaks = 0
     
-    for file in thefiles:
+    for file in files:
         
         fileout_path = '.\\' + output_root + file[1:]
         
@@ -141,7 +141,7 @@ def linebreak_remover(output_root, allmode = False):
                 fileout.write(fileout_text)
             
     
-    return (len(thefiles), files_changed, deleted_linebreaks, deleted_spaces)
+    return (len(files), files_changed, deleted_linebreaks, deleted_spaces)
   
   
 if __name__ == "__main__":
@@ -180,13 +180,13 @@ Do you want the output to include all files (even those without changes)? "
     if excluded:
         thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
     
-    dircreator(outputdir)
+    dircreator(thefiles, outputdir)
 
 
     print ("\n\nWORKING...\n\n")
 
 
-    results = linebreak_remover(outputdir, mode)
+    results = linebreak_remover(thefiles, outputdir, mode)
 
 
     print('Number of files:           ' , results[0])  
