@@ -68,9 +68,8 @@ This version is much quicker and reliable but any line break inside brackets\n\
 or dev comments that don't start with the usual number sign will raise\n\
 a false positive. Use the line-break-remover to minimaze the false positives.\n\
 You'll have to solve the problem manually, using the output text as reference.\n\
-\n\
-\n\
-Type [y]es and hit enter to proceed or anything else to quit: "
+\n\n\
+[y]es and hit enter to proceed or anything else to quit: "
 
     no_files_msg = "\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\

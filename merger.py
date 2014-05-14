@@ -33,9 +33,8 @@ start_msg = "\n\
 This script merges Fallout .msg files in one big file.\n\
 This may come in handy for spotting isolated grammatical or spelling mistakes\n\
 by using an aplication with this purpose (like MS Word).\n\
-\n\
-\n\
-Type [y]es and hit enter to proceed or anything else to quit: "
+\n\n\
+[y]es and hit enter to proceed or anything else to quit: "
 
 
 no_files_msg = "\n\
@@ -76,7 +75,7 @@ else:
     input()
     exit()
   
-comments, indices, names, header_footer, dic = optionscheck( (comments_msg, indices_msg, names_msg, hf_msg, dic_msg) )
+comments, indices, names, header_footer, dic = optionscheck( [comments_msg, indices_msg, names_msg, hf_msg, dic_msg] )
 
 
 print ('\n\nWORKING...\n\n')

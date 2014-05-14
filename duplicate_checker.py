@@ -57,9 +57,8 @@ if __name__ == "__main__":
 This script checks Fallout's .msg files for duplicates in the index numbers.\n\
 The result will be saved into a text file called 'dlc-result'. \n\
 The script doesn't take into account the index numbers inside dev comments.\n\
-\n\
-\n\
-Type [y]es and hit enter to proceed or anything else to quit: "
+\n\n\
+[y]es and hit enter to proceed or anything else to quit: "
 
     no_files_msg = "\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\
