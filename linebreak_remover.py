@@ -18,23 +18,52 @@ def pathfinder(excludedirs = []):
 
 def startcheck(message):
     inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'): pass
-    else: exit()
+    if inputcheck in ('yes','y'): 
+        csettings = False
+    elif inputcheck in ('c','custom'): 
+        csettings = True
+    else: 
+        exit()
+    return csettings
 
+#to be changed
+def optionscheck(questions):
+    answers = []
+    
+    inputcheck_ex = input(questions[0]).lower()
+    
+    if inputcheck_ex: 
+        inputcheck_ex = tuple( inputcheck_ex.split() )
+    else:
+        inputcheck_ex = False
+    
+    inputcheck_mode = input(questions[1]).lower()
+    
+    if inputcheck_mode in ('yes','y'):
+        inputcheck_mode = True
+    else:
+        inputcheck_mode = False
+    
+    return (inputcheck_ex, inputcheck_mode)
 
-def createdirs():
-    if not os.path.exists('out'):
-        os.makedirs('out')
+    
+def dircreator(output_root):
+    
+    if not os.path.exists(output_root):
+        os.makedirs(output_root)
+    
     for file in thefiles:       
+        
         dirpath = file[::-1]
         dirpath = dirpath[dirpath.index('\\'):]
         dirpath = dirpath[::-1]
-        dirpath = '.\\out' + dirpath[1:]
+        dirpath = '.\\' + output_root + dirpath[1:]
+        
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-            
-def linebreak_remover():
+#if allmode is False it will write only files with changes
+def linebreak_remover(output_root, allmode = False):
     
     files_changed = 0
     deleted_spaces = 0
@@ -42,7 +71,7 @@ def linebreak_remover():
     
     for file in thefiles:
         
-        fileout_path = '.\\out' + file[1:]
+        fileout_path = '.\\' + output_root + file[1:]
         
         with open(file, 'r') as filein:
             lines = filein.readlines()
@@ -94,9 +123,20 @@ def linebreak_remover():
                 fileout_text = fileout_text + line
         
         
-        if fileout_text != filein_reference:
+
+        
+        if not allmode:
             
-            files_changed = files_changed +1 
+            if fileout_text != filein_reference:
+                files_changed = files_changed +1 
+                
+                with open(fileout_path, 'w') as fileout:
+                    fileout.write(fileout_text)
+        else:
+            
+            if fileout_text != filein_reference:
+                files_changed = files_changed +1 
+            
             with open(fileout_path, 'w') as fileout:
                 fileout.write(fileout_text)
             
@@ -109,34 +149,44 @@ if __name__ == "__main__":
     start_msg = "\n\
 This script opens Fallout .msg files, looks for break lines,\n\
 removes them and saves the changes (with the same directory structure)\n\
-in a directory called 'out'. This will also remove unnecessary spaces.\n\
-Both fke_dude.msg and deadcomp.msg are excluded.\n\
-\n\
-\n\
-Type [y]es and hit enter to proceed or anything else to quit: "
+in a directory called 'output'. This will also remove unnecessary spaces.\n\
+Both fke_dude.msg and deadcomp.msg are excluded by default.\n\
+\n\n\
+[y]es to proceed, [c]ustom to change the settings or anything else to quit: "
 
-    no_files_msg = "\n\
+    no_files_msg = "\n\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\
 Hit enter to quit and try again.\n"
 
+    exclusions_msg = "\n\
+What files do you want to exclude (case insensitive)? Ex: 'f1.msg f2.msg'\n"
+    
+    mode_msg = "\n\n\
+Do you want the output to include all files (even those without changes)? "
+    
+    outputdir = 'output'
 
-    thefiles = pathfinder(['out'])
-    excluded = ('fke_dude.msg', 'deadcomp.msg')
-    thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
+    thefiles = pathfinder([outputdir])
 
     if thefiles:  
-        startcheck(start_msg)
+        if startcheck(start_msg):
+            options = ( optionscheck( [exclusions_msg, mode_msg] ) )
+            excluded = options[0]
+            mode = options[1]
     else: 
         print(no_files_msg)
         input()
         exit()
+    if excluded:
+        thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
+    
+    dircreator(outputdir)
 
-    createdirs()
 
     print ("\n\nWORKING...\n\n")
 
 
-    results = linebreak_remover()
+    results = linebreak_remover(outputdir, mode)
 
 
     print('Number of files:           ' , results[0])  
