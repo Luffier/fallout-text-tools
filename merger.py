@@ -1,9 +1,14 @@
 import os, re, fnmatch
 
-thefiles = []
-for root, dirnames, filenames in os.walk('.'):
-    for filename in fnmatch.filter(filenames, '*.msg'):
-        thefiles.append(os.path.join(root, filename))
+
+def pathfinder():
+    filespaths = []
+    for root, dirnames, filenames in os.walk('.'):
+        for filename in fnmatch.filter(filenames, '*.msg'):
+            filespaths.append(os.path.join(root, filename))
+    return filespaths  
+
+thefiles = pathfinder()
 
 jump = '\n'
 bar = '='
@@ -17,7 +22,7 @@ dic_result = ''
 left = len(thefiles)
 
 
-description = "\n\
+start_msg = "\n\
 This script merges Fallout .msg files in one big file.\n\
 This may come in handy for spotting isolated grammatical or spelling mistakes\n\
 by using an aplication with this purpose (like MS Word).\n\
@@ -25,45 +30,51 @@ by using an aplication with this purpose (like MS Word).\n\
 \n\
 Type [y]es and hit enter to proceed or anything else to quit: "
 
-des_comments = '\nDo you want to include developer comments (# lines)? '
-des_indices = '\nDo you want to include the index number to each line (for reference; recommended)? '
-des_names = '\nDo you want to include the name of the file to each line (for reference; recommended)? '
-des_hf = '\nDo you want to include a header and footer to each block of text? '
-des_dic = '\nDo you want to generate a dictionary for MS Word (little use)? '
+
+no_files_msg = "\n\
+There are no .msg files in this directory (the script makes a recursive search).\n\
+Hit enter to quit and try again.\n"
+
+
+comments_msg = '\nDo you want to include developer comments (# lines)? '
+indices_msg = '\nDo you want to include the index number to each line (recommended)? '
+names_msg = '\nDo you want to include the name of the file to each line (recommended)? '
+hf_msg = '\nDo you want to include a header and footer to each block of text? '
+dic_msg = '\nDo you want to generate a dictionary for MS Word (little use)? '
 
 
 
-def startcheck():
-	inputcheck = input(description).lower()
-	if inputcheck in ('yes','y'): pass
-	else: exit()
+def startcheck(message):
+    inputcheck = input(message).lower()
+    if inputcheck in ('yes','y'): pass
+    else: exit()
 
 def optionscheck():
-    inputcheck_dev = input(des_comments).lower()
+    inputcheck_dev = input(comments_msg).lower()
     if inputcheck_dev in ('yes','y'):
         option1 = True
     else: 
         option1 = False
         
-    inputcheck_indices = input(des_indices).lower()
+    inputcheck_indices = input(indices_msg).lower()
     if inputcheck_indices in ('yes','y'):
         option2 = True
     else: 
         option2 = False
         
-    inputcheck_ref_name = input(des_names).lower()
+    inputcheck_ref_name = input(names_msg).lower()
     if inputcheck_ref_name in ('yes','y'):
         option3 = True
     else: 
         option3 = False
         
-    inputcheck_hf = input(des_hf).lower()    
+    inputcheck_hf = input(hf_msg).lower()    
     if inputcheck_hf in ('yes','y'):
         option4 = True
     else: 
         option4 = False
         
-    inputcheck_dic = input(des_dic).lower()    
+    inputcheck_dic = input(dic_msg).lower()    
     if inputcheck_dic in ('yes','y'):
         option5 = True
     else: 
@@ -71,12 +82,23 @@ def optionscheck():
         
     return option1, option2, option3, option4, option5
     
+    
+    
    
-startcheck()
-
+if thefiles:  
+    startcheck(start_msg)
+else: 
+    print(no_files_msg)
+    input()
+    exit()
+  
 comments, indices, names, header_footer, dic = optionscheck()
 
+
+
 print ('\n\nWORKING...\n\n')
+
+
 
 for file in thefiles:
 
@@ -99,28 +121,29 @@ for file in thefiles:
     for line in lines:
     
         if line.startswith('{'):
-            indexm = re.search(r'\{([0-9]*)\}', line)
+            indexm = re.search(r'^\{[0-9]+\}', line)
             index = line[indexm.start()+1:indexm.end()-1]
-            line = line[:indexm.start()+1] + line[indexm.end()-1:]
+            line = line[indexm.end()+2:]
             
-            if line.endswith('}'): 
-                line = line[:-1]
+            contentm = re.findall(r'\{(.+)\}', line)
             
-            contentm = re.search(r'\}\{(.*)\}\{', line)
-            line = line[contentm.end():-2] + jump
+            if contentm:
+                content = contentm[0]
+            else:
+                content = ''
+            
+            line = content + jump
             
             if indices and names:
-                line = filename.replace('.MSG','') + space + index + space + line
+                line = filename[:-4] + space + index + space + line
             
             elif indices and not names:
                 line = index + space + line
             
             elif not indices and names:
-                line = filename.replace('.MSG','') + space + line
-            
-            elif not indices and not names: 
-                pass
-            
+                line = filename[:-4] + space + line
+
+
             result_step = result_step + line
         
         elif line == '\n':
