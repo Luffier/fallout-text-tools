@@ -56,42 +56,19 @@ def startcheck(message):
     if inputcheck in ('yes','y'): pass
     else: exit()
 
-def optionscheck():
-    inputcheck_dev = input(comments_msg).lower()
-    if inputcheck_dev in ('yes','y'):
-        option1 = True
-    else: 
-        option1 = False
-        
-    inputcheck_indices = input(indices_msg).lower()
-    if inputcheck_indices in ('yes','y'):
-        option2 = True
-    else: 
-        option2 = False
-        
-    inputcheck_ref_name = input(names_msg).lower()
-    if inputcheck_ref_name in ('yes','y'):
-        option3 = True
-    else: 
-        option3 = False
-        
-    inputcheck_hf = input(hf_msg).lower()    
-    if inputcheck_hf in ('yes','y'):
-        option4 = True
-    else: 
-        option4 = False
-        
-    inputcheck_dic = input(dic_msg).lower()    
-    if inputcheck_dic in ('yes','y'):
-        option5 = True
-    else: 
-        option5 = False
-        
-    return option1, option2, option3, option4, option5
     
+def optionscheck(questions):
+    answers = []
+    for question in questions:
+        inputcheck = input(question).lower()
+        if inputcheck in ('yes','y'):
+            answers.append(True)
+        else: 
+            answers.append(False)
+  
+    return answers
+
     
-    
-   
 if thefiles:  
     startcheck(start_msg)
 else: 
@@ -99,8 +76,7 @@ else:
     input()
     exit()
   
-comments, indices, names, header_footer, dic = optionscheck()
-
+comments, indices, names, header_footer, dic = optionscheck( (comments_msg, indices_msg, names_msg, hf_msg, dic_msg) )
 
 
 print ('\n\nWORKING...\n\n')
