@@ -1,12 +1,18 @@
 import os, re, fnmatch
 
 
-def pathfinder():
+def pathfinder(excludedirs = []):
     filespaths = []
     for root, dirnames, filenames in os.walk('.'):
-        if 'out' in dirnames: dirnames.remove('out')
+        
+        if excludedirs:
+            for exclusion in excludedirs:
+                if exclusion in dirnames:
+                    dirnames.remove(exclusion)
+        
         for filename in fnmatch.filter(filenames, '*.msg'):
             filespaths.append(os.path.join(root, filename))
+    
     return filespaths
     
 
@@ -114,7 +120,7 @@ There are no .msg files in this directory (the script makes a recursive search).
 Hit enter to quit and try again.\n"
 
 
-    thefiles = pathfinder()
+    thefiles = pathfinder(['out'])
     excluded = ('fke_dude.msg', 'deadcomp.msg')
     thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
 

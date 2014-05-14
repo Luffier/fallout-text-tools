@@ -1,11 +1,18 @@
 import os, fnmatch
 
 
-def pathfinder():
+def pathfinder(excludedirs = []):
     filespaths = []
     for root, dirnames, filenames in os.walk('.'):
+        
+        if excludedirs:
+            for exclusion in excludedirs:
+                if exclusion in dirnames:
+                    dirnames.remove(exclusion)
+        
         for filename in fnmatch.filter(filenames, '*.msg'):
             filespaths.append(os.path.join(root, filename))
+    
     return filespaths  
 
     
