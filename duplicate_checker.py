@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     start_msg = "\n\
 This script checks Fallout's .msg files for duplicates in the index numbers.\n\
-The result will be saved into a text file called 'dlc-result'. \n\
+The result will be saved into a text file called 'dc-result'. \n\
 The script doesn't take into account the index numbers inside dev comments.\n\
 \n\n\
 [y]es and hit enter to proceed or anything else to quit: "
@@ -88,7 +88,7 @@ Hit enter to quit and try again.\n"
         
     else:
         print("DONE! There are duplicate lines!")
-        with open('dlc-result.txt','w') as foutput:
+        with open('dc-result.txt','w') as foutput:
             foutput.write(output)
        
             
