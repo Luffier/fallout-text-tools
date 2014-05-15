@@ -52,8 +52,10 @@ dic_msg = '\nDo you want to generate a dictionary for MS Word (little use)? '
 
 def startcheck(message):
     inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'): pass
-    else: exit()
+    if inputcheck in ('yes','y'):
+        pass
+    else:
+        exit()
 
     
 def optionscheck(questions):
@@ -62,15 +64,15 @@ def optionscheck(questions):
         inputcheck = input(question).lower()
         if inputcheck in ('yes','y'):
             answers.append(True)
-        else: 
+        else:
             answers.append(False)
   
     return answers
 
     
-if thefiles:  
+if thefiles:
     startcheck(start_msg)
-else: 
+else:
     print(no_files_msg)
     input()
     exit()
@@ -87,14 +89,12 @@ for file in thefiles:
     with open(file, 'r') as rfile:
         lines = rfile.readlines()
         
-    filename = file[::-1]
-    filename = filename[:filename.index('\\')]
-    filename = filename[::-1]
+    filename = os.path.split(file)[-1]
     header = (len(filename)+32)*bar + jump + 12*bar + filename + '  BEGINS' + 12*bar + jump + (len(filename)+32)*bar + 4*jump
     footer = 3*jump +(len(filename)+32)*bar + jump + 12*bar + filename + '  ENDS' + 14*bar + jump + (len(filename)+32)*bar + 2*jump
     
     if dic:
-        dic_result = dic_result + filename + jump + filename.replace('.MSG','') + jump
+        dic_result = dic_result + filename + jump + filename[:-4] + jump
     
     if not header_footer:
         header = ''
@@ -143,21 +143,21 @@ for file in thefiles:
     print (filename + ' DONE ' + '-'*fbars + '>  ' + str(left) + ' files left.')
 
 
-try: 
+try:
     with open('merged_text.txt', 'w') as output:
         output.write(result)
 
-except PermissionError: 
+except PermissionError:
     print ('\n\nERROR. merged_text.txt is open in another program. Close it and try again.\n\n')
     input()
     exit()
 
 if dic:
-    try: 
+    try:
         with open('merged_text.dic', 'w', encoding='utf16') as dic_file:
             dic_file.write(dic_result)
 
-    except PermissionError: 
+    except PermissionError:
         print ('\n\nERROR. merged_text.dic is open in another program. Close it and try again.\n\n')
         input()
         exit()
