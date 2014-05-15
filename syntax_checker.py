@@ -1,9 +1,9 @@
 import os, fnmatch
 
 
-def pathfinder(excludedirs = []):
+def pathfinder(target = '.', excludedirs = []):
     filespaths = []
-    for root, dirnames, filenames in os.walk('.'):
+    for root, dirnames, filenames in os.walk(target):
         
         if excludedirs:
             for exclusion in excludedirs:
@@ -13,7 +13,7 @@ def pathfinder(excludedirs = []):
         for filename in fnmatch.filter(filenames, '*.msg'):
             filespaths.append(os.path.join(root, filename))
     
-    return filespaths  
+    return filespaths 
 
 
 def startcheck(message):
@@ -97,7 +97,7 @@ but ugly) or a 'lost' set of brackets (it would have cause a crash!) \n" + 175*"
     print ("\n\nWORKING...\n\n")
 
 
-    output = syntax_checker(thefiles)     
+    output = syntax_checker(thefiles)
       
     if not output:
         output = "DONE! All files have correct syntax!"

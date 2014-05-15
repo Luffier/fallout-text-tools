@@ -1,9 +1,9 @@
-import os, re, fnmatch
+import os, shutil, re, fnmatch
 
 
-def pathfinder(excludedirs = []):
+def pathfinder(target = '.', excludedirs = []):
     filespaths = []
-    for root, dirnames, filenames in os.walk('.'):
+    for root, dirnames, filenames in os.walk(target):
         
         if excludedirs:
             for exclusion in excludedirs:
@@ -18,13 +18,14 @@ def pathfinder(excludedirs = []):
 
 def startcheck(message):
     inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'): 
-        csettings = False
-    elif inputcheck in ('c','custom'): 
-        csettings = True
-    else: 
+    if inputcheck in ('yes','y'):
+        custom = False
+    elif inputcheck in ('c','custom'):
+        custom = True
+    else:
         exit()
-    return csettings
+    return custom
+
 
 #to be changed
 def optionscheck(questions):
@@ -32,7 +33,7 @@ def optionscheck(questions):
     
     inputcheck_ex = input(questions[0]).lower()
     
-    if inputcheck_ex: 
+    if inputcheck_ex:
         inputcheck_ex = tuple( inputcheck_ex.split() )
     else:
         inputcheck_ex = False
@@ -44,24 +45,27 @@ def optionscheck(questions):
     else:
         inputcheck_mode = False
     
-    return (inputcheck_ex, inputcheck_mode)
+    return inputcheck_ex, inputcheck_mode
 
     
 def dircreator(files, output_root):
     
+    ndirs = 0
+    
     if not os.path.exists(output_root):
         os.makedirs(output_root)
     
-    for file in files:       
+    for file in files:
         
-        dirpath = file[::-1]
-        dirpath = dirpath[dirpath.index('\\'):]
-        dirpath = dirpath[::-1]
-        dirpath = '.\\' + output_root + dirpath[1:]
+        fullpath = os.path.dirname(file)
+        dirpath = os.path.join('.', output_root, fullpath[2:])
         
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
-
+            ndirs = ndirs + 1
+    
+    return ndirs
+    
 #if allmode is False it will write only files with changes
 def linebreak_remover(files, output_root, allmode = False):
     
@@ -71,7 +75,9 @@ def linebreak_remover(files, output_root, allmode = False):
     
     for file in files:
         
-        fileout_path = '.\\' + output_root + file[1:]
+        fileout_path = os.path.join('.', output_root, file[2:])
+        
+
         
         with open(file, 'r') as filein:
             lines = filein.readlines()
@@ -119,38 +125,44 @@ def linebreak_remover(files, output_root, allmode = False):
                 deleted_linebreaks = deleted_linebreaks + 1
 
             #write if it doesn't fit the above categories
-            else: 
+            else:
                 fileout_text = fileout_text + line
         
         
 
         
-        if not allmode:
-            
-            if fileout_text != filein_reference:
-                files_changed = files_changed +1 
-                
-                with open(fileout_path, 'w') as fileout:
-                    fileout.write(fileout_text)
-        else:
+        if allmode:
             
             if fileout_text != filein_reference:
                 files_changed = files_changed +1 
             
             with open(fileout_path, 'w') as fileout:
                 fileout.write(fileout_text)
+        
+        else:
+            
+            if fileout_text != filein_reference:
+                files_changed = files_changed +1 
+                
+                with open(fileout_path, 'w') as fileout:
+                    fileout.write(fileout_text)
             
     
     return (len(files), files_changed, deleted_linebreaks, deleted_spaces)
-  
-  
+
+
+
+
 if __name__ == "__main__":
 
     start_msg = "\n\
 This script opens Fallout .msg files, looks for break lines,\n\
 removes them and saves the changes (with the same directory structure)\n\
 in a directory called 'output'. This will also remove unnecessary spaces.\n\
-Both fke_dude.msg and deadcomp.msg are excluded by default.\n\
+\n\
+Default settings:\n\
+* fke_dude.msg and deadcomp.msg are excluded\n\
+* the script will only output files with changes\n\
 \n\n\
 [y]es to proceed, [c]ustom to change the settings or anything else to quit: "
 
@@ -166,19 +178,23 @@ Do you want the output to include all files (even those without changes)? "
     
     outputdir = 'output'
 
-    thefiles = pathfinder([outputdir])
+    thefiles = pathfinder(excludedirs = [outputdir])
 
-    if thefiles:  
+    if thefiles:
+        
         if startcheck(start_msg):
-            options = ( optionscheck( [exclusions_msg, mode_msg] ) )
-            excluded = options[0]
-            mode = options[1]
-    else: 
+            excluded, mode = ( optionscheck( [exclusions_msg, mode_msg] ) )
+            
+            if excluded:
+                thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
+        
+        else:
+            excluded, mode = False, False
+    else:
         print(no_files_msg)
         input()
         exit()
-    if excluded:
-        thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
+    
     
     dircreator(thefiles, outputdir)
 
@@ -189,10 +205,10 @@ Do you want the output to include all files (even those without changes)? "
     results = linebreak_remover(thefiles, outputdir, mode)
 
 
-    print('Number of files:           ' , results[0])  
-    print('Number of files changed:   ' , results[1])
-    print('Line breaks toll:          ' , results[2])
-    print('Unnecessary spaces toll:   ' , results[3])
+    print('Number of files:           %i' % results[0])  
+    print('Number of files changed:   %i' % results[1])
+    print('Line breaks toll:          %i' % results[2])
+    print('Unnecessary spaces toll:   %i' % results[3])
     print ("\n\nDONE!")
 
     input()

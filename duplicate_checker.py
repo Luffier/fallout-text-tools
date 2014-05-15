@@ -1,9 +1,9 @@
 import os, re, fnmatch
 
 
-def pathfinder(excludedirs = []):
+def pathfinder(target = '.', excludedirs = []):
     filespaths = []
-    for root, dirnames, filenames in os.walk('.'):
+    for root, dirnames, filenames in os.walk(target):
         
         if excludedirs:
             for exclusion in excludedirs:
