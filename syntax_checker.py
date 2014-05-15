@@ -15,11 +15,13 @@ def pathfinder(excludedirs = []):
     
     return filespaths  
 
-    
+
 def startcheck(message):
     inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'): pass
-    else: exit()
+    if inputcheck in ('yes','y'):
+        pass
+    else:
+        exit()
 
 
 def syntax_checker(files):
@@ -57,8 +59,9 @@ def syntax_checker(files):
         occurrence = False
     return result
 
-    
-    
+
+
+
 if __name__ == "__main__":
 
     start_msg = "\n\
@@ -84,9 +87,9 @@ but ugly) or a 'lost' set of brackets (it would have cause a crash!) \n" + 175*"
     
     thefiles = pathfinder()
         
-    if thefiles:  
+    if thefiles:
         startcheck(start_msg)
-    else: 
+    else:
         print(no_files_msg)
         input()
         exit()

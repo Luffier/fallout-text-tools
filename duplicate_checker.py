@@ -15,13 +15,15 @@ def pathfinder(excludedirs = []):
     
     return filespaths
 
-    
+
 def startcheck(message):
     inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'): pass
-    else: exit()
+    if inputcheck in ('yes','y'):
+        pass
+    else:
+        exit()
 
-    
+
 def duplicate_checker(files):
     
     result = ''
@@ -49,8 +51,10 @@ def duplicate_checker(files):
             result = result + "\n\n"
     
     return result
-    
-    
+
+
+
+
 if __name__ == "__main__":
 
     start_msg = "\n\
@@ -67,9 +71,9 @@ Hit enter to quit and try again.\n"
     
     thefiles = pathfinder()
 
-    if thefiles:  
+    if thefiles:
         startcheck(start_msg)
-    else: 
+    else:
         print(no_files_msg)
         input()
         exit()
