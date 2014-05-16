@@ -67,7 +67,7 @@ def dircreator(files, output_root):
     return ndirs
     
 #if allmode is False it will write only files with changes
-def linebreak_remover(files, output_root, excluded = [], allmode = False):
+def linebreak_remover(files, output_root, excluded = [], allmode = False, clsmode = False):
     
     files_changed = 0
     deleted_spaces = 0
@@ -96,37 +96,45 @@ def linebreak_remover(files, output_root, excluded = [], allmode = False):
             filein_reference = ''.join(lines)
             
             fileout_text = ''
-            
-            
+
             for line in lines:
+            
+                if clsmode:
+                    line = re.sub(r'\t', ' ' *4, line)
+                    line = re.sub(r'\/\/', '#', line)
                 
-                m1 = re.findall(r'\}[ ]*$', line) #not empty for normal -single- lines
-                m2 = re.findall(r'\}[ ]*\#.*$', line) #not empty for lines with inline dev comments
-                
-                #counts the number of unnecessary spaces before deleting them
-                spaces = re.findall(r'\}([ ]*)$', line)
+                m1 = re.findall(r'\}[ \t]*$', line) #not empty for normal -single- lines
+                m2 = re.findall(r'\}[ \t]*\#.*$', line) #not empty for lines with inline dev comments
+                m3 = re.findall(r'\}[ \t]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
+
+                #counts the number of unnecessary spaces/tabs before deleting them
+                spaces = re.findall(r'\}([ \t]*)$', line)
                 if spaces:
                     deleted_spaces = deleted_spaces + len(spaces[0])
                 
                 #removes any space after the final closing bracket
-                line = re.sub(r'(\})[ ]*$', r'\1', line)
+                line = re.sub(r'(\})[ \t]*$', r'\1', line)
            
                 #dev comment line
                 if line.startswith('#'):
                     fileout_text = fileout_text + line
                     
-                #line with inline dev comment; could be merge with the above
-                elif m2:
-                    
-                    #counts the number of unnecessary spaces before deleting them
-                    spaces = re.findall(r'([ ]*)$', line)
+                    spaces = re.findall(r'([ \t]*)$', line)
                     if spaces:
                         deleted_spaces = deleted_spaces + len(spaces[0])
-
-                    #removes any space after the inline dev comment
-                    line = re.sub(r'[ ]*$', '', line)
+                    line = re.sub(r'[ \t]*$', '', line)
+                    
+                #line with inline dev comment; could be merge with the above
+                elif m2 or m3:
+                    
+                    spaces = re.findall(r'([ \t]*)$', line)
+                    if spaces:
+                        deleted_spaces = deleted_spaces + len(spaces[0])
+                    line = re.sub(r'[ \t]*$', '', line)
+                    
                     fileout_text = fileout_text + line
                 
+                    
                 #needed for some reason
                 elif line == '\n':
                     fileout_text = fileout_text + '\n'
