@@ -67,88 +67,98 @@ def dircreator(files, output_root):
     return ndirs
     
 #if allmode is False it will write only files with changes
-def linebreak_remover(files, output_root, allmode = False):
+def linebreak_remover(files, output_root, excluded = [], allmode = False):
     
     files_changed = 0
     deleted_spaces = 0
     deleted_linebreaks = 0
     
+    #if not argument given Python treats it as a False
+    if not excluded: 
+        excluded = []
+
     for file in files:
         
         fileout_path = os.path.join('.', output_root, file[2:])
+        filename = os.path.split(file)[-1]
         
+        if filename.lower() in excluded:
 
-        
-        with open(file, 'r') as filein:
-            lines = filein.readlines()
+            if allmode:
+                shutil.copy(file, fileout_path)
+            continue
 
-        filein_reference = ''.join(lines)
+        else:
         
-        fileout_text = ''
-        
-        for line in lines:
+            with open(file, 'r') as filein:
+                lines = filein.readlines()
+
+            filein_reference = ''.join(lines)
             
-            m1 = re.findall(r'\}[ ]*$', line) #not empty for normal -single- lines
-            m2 = re.findall(r'\}[ ]*\#.*$', line) #not empty for lines with inline dev comments
+            fileout_text = ''
             
-            #counts the number of unnecessary spaces before deleting them
-            spaces = re.findall(r'\}([ ]*)$', line)
-            if spaces:
-                deleted_spaces = deleted_spaces + len(spaces[0])
             
-            #removes any space after the final closing bracket
-            line = re.sub(r'(\})[ ]*$', r'\1', line)
-       
-            #dev comment line
-            if line.startswith('#'):
-                fileout_text = fileout_text + line
+            for line in lines:
                 
-            #line with inline dev comment; could be merge with the above
-            elif m2:
+                m1 = re.findall(r'\}[ ]*$', line) #not empty for normal -single- lines
+                m2 = re.findall(r'\}[ ]*\#.*$', line) #not empty for lines with inline dev comments
                 
                 #counts the number of unnecessary spaces before deleting them
-                spaces = re.findall(r'([ ]*)$', line)
+                spaces = re.findall(r'\}([ ]*)$', line)
                 if spaces:
                     deleted_spaces = deleted_spaces + len(spaces[0])
-
-                #removes any space after the inline dev comment
-                line = re.sub(r'[ ]*$', '', line)
-                fileout_text = fileout_text + line
-            
-            #needed for some reason
-            elif line == '\n':
-                fileout_text = fileout_text + '\n'
-            
-            #line with an open bracket and a line break (main goal)
-            elif not m1:
-                fileout_text = fileout_text + line.replace('\n','')
-                deleted_linebreaks = deleted_linebreaks + 1
-
-            #write if it doesn't fit the above categories
-            else:
-                fileout_text = fileout_text + line
-        
-        
-
-        
-        if allmode:
-            
-            if fileout_text != filein_reference:
-                files_changed = files_changed +1 
-            
-            with open(fileout_path, 'w') as fileout:
-                fileout.write(fileout_text)
-        
-        else:
-            
-            if fileout_text != filein_reference:
-                files_changed = files_changed +1 
                 
-                with open(fileout_path, 'w') as fileout:
-                    fileout.write(fileout_text)
+                #removes any space after the final closing bracket
+                line = re.sub(r'(\})[ ]*$', r'\1', line)
+           
+                #dev comment line
+                if line.startswith('#'):
+                    fileout_text = fileout_text + line
+                    
+                #line with inline dev comment; could be merge with the above
+                elif m2:
+                    
+                    #counts the number of unnecessary spaces before deleting them
+                    spaces = re.findall(r'([ ]*)$', line)
+                    if spaces:
+                        deleted_spaces = deleted_spaces + len(spaces[0])
+
+                    #removes any space after the inline dev comment
+                    line = re.sub(r'[ ]*$', '', line)
+                    fileout_text = fileout_text + line
+                
+                #needed for some reason
+                elif line == '\n':
+                    fileout_text = fileout_text + '\n'
+                
+                #line with an open bracket and a line break (main goal)
+                elif not m1:
+                    fileout_text = fileout_text + line.replace('\n','')
+                    deleted_linebreaks = deleted_linebreaks + 1
+
+                #write if it doesn't fit the above categories
+                else:
+                    fileout_text = fileout_text + line
             
-    
-    return (len(files), files_changed, deleted_linebreaks, deleted_spaces)
+            
+            print(file)
+            if allmode:
+               
+                if fileout_text != filein_reference:
+                    files_changed = files_changed +1 
+                
+                shutil.copy(file, fileout_path)
+            
+            else:
+                
+                if fileout_text != filein_reference:
+                    files_changed = files_changed +1 
+                    
+                    with open(fileout_path, 'w') as fileout:
+                        fileout.write(fileout_text)
+            
+        
+    return [len(files), len(excluded), files_changed, deleted_linebreaks, deleted_spaces]
 
 
 
@@ -180,16 +190,18 @@ Do you want the output to include all files (even those without changes)? "
 
     thefiles = pathfinder(excludedirs = [outputdir])
 
+    excluded_files = ['fke_dude.msg','deadcomp.msg']
+    mode = False
+    
     if thefiles:
         
         if startcheck(start_msg):
             excluded, mode = ( optionscheck( [exclusions_msg, mode_msg] ) )
             
             if excluded:
-                thefiles[:] = [file for file in thefiles if not file.lower().endswith(excluded)]
+                excluded_files = excluded
         
-        else:
-            excluded, mode = False, False
+
     else:
         print(no_files_msg)
         input()
@@ -202,13 +214,13 @@ Do you want the output to include all files (even those without changes)? "
     print ("\n\nWORKING...\n\n")
 
 
-    results = linebreak_remover(thefiles, outputdir, mode)
+    results = linebreak_remover(thefiles, outputdir, excluded = excluded_files, allmode = mode)
 
 
-    print('Number of files:           %i' % results[0])  
-    print('Number of files changed:   %i' % results[1])
-    print('Line breaks toll:          %i' % results[2])
-    print('Unnecessary spaces toll:   %i' % results[3])
+    print('Number of files: %i (%i excluded)' % ( results[0], results[1]) )
+    print('Number of files changed: %i' % results[2])
+    print('Line breaks toll: %i' % results[3])
+    print('Unnecessary spaces toll: %i' % results[4])
     print ("\n\nDONE!")
 
     input()
