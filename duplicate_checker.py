@@ -37,7 +37,7 @@ def duplicate_checker(files):
         lines = [line for line in lines if line.startswith('#') is False]
         lines = [line for line in lines if line.startswith('{') is True]
         
-        indices = [re.findall(r'^\{([0-9])+\}', line)[0] for line in lines]
+        indices = [re.findall(r'^\{([0-9]+)\}', line)[0] for line in lines]
         indices = [int(index) for index in indices]
         
         #fills matches if there's any duplicate and records it

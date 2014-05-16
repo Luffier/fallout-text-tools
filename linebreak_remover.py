@@ -73,7 +73,7 @@ def linebreak_remover(files, output_root, excluded = [], allmode = False):
     deleted_spaces = 0
     deleted_linebreaks = 0
     
-    #if not argument given Python treats it as a False
+    #if not argument given Python treats it as a False; it needs to be an empty list
     if not excluded: 
         excluded = []
 
@@ -89,7 +89,7 @@ def linebreak_remover(files, output_root, excluded = [], allmode = False):
             continue
 
         else:
-        
+
             with open(file, 'r') as filein:
                 lines = filein.readlines()
 
@@ -140,24 +140,16 @@ def linebreak_remover(files, output_root, excluded = [], allmode = False):
                 else:
                     fileout_text = fileout_text + line
             
+            if fileout_text != filein_reference:
+                
+                files_changed = files_changed + 1 
+                with open(fileout_path, 'w') as fileout:
+                    fileout.write(fileout_text)
             
-            print(file)
-            if allmode:
+            elif allmode:
                
-                if fileout_text != filein_reference:
-                    files_changed = files_changed +1 
-                
-                shutil.copy(file, fileout_path)
+               shutil.copy(file, fileout_path)
             
-            else:
-                
-                if fileout_text != filein_reference:
-                    files_changed = files_changed +1 
-                    
-                    with open(fileout_path, 'w') as fileout:
-                        fileout.write(fileout_text)
-            
-        
     return [len(files), len(excluded), files_changed, deleted_linebreaks, deleted_spaces]
 
 
@@ -216,11 +208,11 @@ Do you want the output to include all files (even those without changes)? "
 
     results = linebreak_remover(thefiles, outputdir, excluded = excluded_files, allmode = mode)
 
-
-    print('Number of files: %i (%i excluded)' % ( results[0], results[1]) )
-    print('Number of files changed: %i' % results[2])
-    print('Line breaks toll: %i' % results[3])
-    print('Unnecessary spaces toll: %i' % results[4])
+    
+    print( 'Number of files: %i (%i excluded)' % (results[0], results[1]) )
+    print( 'Number of files changed: %i' % results[2] )
+    print( 'Line breaks toll: %i' % results[3] )
+    print( 'Unnecessary spaces toll: %i' % results[4] )
     print ("\n\nDONE!")
 
     input()
