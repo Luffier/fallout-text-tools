@@ -7,7 +7,7 @@ Made for Python 3.
 All scripts have instructons. Just try them up.
 
 
-==================
+
 Basic instructions
 ==================
 
@@ -22,7 +22,7 @@ Just put the script along with the .msg files (or folders containing them) and r
 
 So, for a real example: put all the .py files inside ENGLISH, run one them, follow the instructions from the prompt, and see the magic.
 
-====================
+
 General instructions
 ====================
 
@@ -39,21 +39,21 @@ You can use chain.py to do exactly this.
 
 
 
-====================
+
 chain.py
 ====================
 Runs the other scripts (except merger.py) in a given order to ease the process.
 
 
 
-====================
+
 duplicate_checker.py
 ====================
 Gives you a text file with a log of all duplicate lines so you can manually remove them.
 
 
 
-====================
+
 linebreak_remover.py
 ====================
 Gives you a folder (with the same directory structure) with all line breaks and unnecessary spaces remove from them.
@@ -64,21 +64,21 @@ Details:
 
 
 
-=================
+
 syntax_checker.py
 =================
 Gives you a text file with a log of all syntax errors (missing brackets) so you can manually fix them.
 
 
 
-=========
+
 merger.py
 =========
 Merges all files into a big one.
 
 
 Details:
-    - You have some options on how the merged text is formatted. Example:
+    - You have some options on how the merged text is formatted. __Example__:
 
 
        """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
