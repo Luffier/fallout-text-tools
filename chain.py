@@ -1,4 +1,4 @@
-import os, fnmatch
+import os
 
 from linebreak_remover import linebreak_remover, pathfinder, dircreator
 from syntax_checker import syntax_checker
@@ -27,32 +27,55 @@ if not thefiles:
 
 dircreator(thefiles, outputdir)
 
-result1 = linebreak_remover(thefiles, outputdir, allmode = True)
+def startcheck():
+    answer = input("Do you want to exclude the [d]efault files (fke_dude.msg and deadcomp.msg), \n\
+[n]one or [o]ther?: ")
+    if answer in ('default','d'):
+        excluded = ['fke_dude.msg','deadcomp.msg']
+    elif answer in ('none','n'):
+        excluded = []
+    elif answer in ('others','other','o'):
+        excluded = input("\nWhich ones?\n\
+(Type the filename -with extension- and if more than one separate with spaces,\n\
+just like this: 'file1.msg file2.msg')\n\n")
+        excluded.lower()
+        excluded.split()
+    else: exit()
+    return excluded
+
+excluded_files = startcheck()
+
+
+
+
+
+
+print("\nSTEP 1/3: Running line break remover...\n")
+
+result1 = linebreak_remover(thefiles, outputdir, excluded = excluded_files, allmode = True)
 
 if not result1:
-    input("\n\n\nThere weren't any lines breaks or unnecessary spaces.\n\
-Hit enter to continue.\n\n\n")
-
+    input("\n\nThere weren't any lines breaks or unnecessary spaces.\n\
+Hit enter to continue.\n\n\n\n")
 else:
-    print('Number of files: %i (%i excluded)' % result1[0], result1[1])  
-    print('Number of files changed: %i' % result1[2])
-    print('Line breaks toll: %i' % result1[3])
-    print('Unnecessary spaces toll: %i' % result1[4])
+    print( '========================================' )
+    print( 'Number of files: %i (%i excluded)' % (result1[0], result1[1]) )
+    print( 'Number of files changed: %i' % result1[2] )
+    print( 'Line breaks toll: %i' % result1[3] )
+    print( 'Unnecessary spaces toll: %i' % result1[4] )
+    print( '========================================' )
+    
+    input("\nAll lines breaks and unnecessary spaces have been removed.\n\
+Hit enter to continue.\n\n\n\n")
 
-    input("\n\n\nAll lines breaks and unnecessary spaces have been removed.\n\
-Hit enter to continue.\n\n\n")
 
 
 
 
 
+print("\nSTEP 2/3: Running syntax checker...\n")
 
 targetdir = os.path.join('.', outputdir)
-
-
-
-
-
 
 thefiles = pathfinder(target = targetdir)
 
@@ -60,34 +83,32 @@ result2 = syntax_checker(thefiles)
 
 if not result2:
     input("There weren't any syntax errors.\n\
-Hit enter to continue.\n\n\n")
-
+Hit enter to continue.\n\n\n\n")
 else:
     result2 = help_msg + result2
     with open('sc-result.txt','w') as fresult2:
         fresult2.write(result2)
     input("All syntax errors have been recorded in 'sc-result.txt'.\n\
 Now, using it as reference, fix all the files manually (those inside 'output').\n\
-Done? Hit enter to continue.\n\n\n")
+Done? Hit enter to continue.\n\n\n\n")
 
 
 
 
 
+print("\nSTEP 3/3: Running duplicate checker...\n")
 
 thefiles = pathfinder(target = targetdir)
 
 result3 = duplicate_checker(thefiles)
 
-
 if not result3:
     input("There weren't any duplicate lines. \n\
 Hit enter to quit.")
-
 else:
-    result3 = help_msg + result3
+    result3 = result3
     with open('dc-result.txt','w') as fresult3:
         fresult3.write(result3)
     input("All duplicate lines have been recorded in 'dc-result.txt'. \n\
-Now, using it as a reference, fix all the files manually (those inside 'output').\n\
-Done? Hit enter to quit.")
+Now, using it as reference, fix all the files manually (those inside 'output').\n\
+Done? Congratulations, you have finished.")
