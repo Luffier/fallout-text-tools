@@ -1,19 +1,6 @@
 import os, re, fnmatch
 
-
-def pathfinder(target = '.', excludedirs = []):
-    filespaths = []
-    for root, dirnames, filenames in os.walk(target):
-        
-        if excludedirs:
-            for exclusion in excludedirs:
-                if exclusion in dirnames:
-                    dirnames.remove(exclusion)
-        
-        for filename in fnmatch.filter(filenames, '*.msg'):
-            filespaths.append(os.path.join(root, filename))
-    
-    return filespaths
+from main import pathfinder, encfinder
 
 
 thefiles = pathfinder()
@@ -58,7 +45,7 @@ def startcheck(message):
     else:
         exit()
 
-    
+
 def optionscheck(questions):
     answers = []
     for question in questions:
@@ -67,17 +54,17 @@ def optionscheck(questions):
             answers.append(True)
         else:
             answers.append(False)
-  
+
     return answers
 
-    
+
 if thefiles:
     startcheck(start_msg)
 else:
     print(no_files_msg)
     input()
     exit()
-  
+
 comments, indices, names, header_footer, dic = optionscheck( [comments_msg, indices_msg, names_msg, hf_msg, dic_msg] )
 
 
@@ -85,62 +72,62 @@ print ('\n\nWORKING...\n\n')
 
 
 
-for file in thefiles:
+for afile in thefiles:
 
-    with open(file, 'r') as rfile:
-        lines = rfile.readlines()
-        
-    filename = os.path.split(file)[-1]
+    with open(afile, 'r') as filein:
+        lines = filein.readlines()
+
+    filename = os.path.split(afile)[-1]
     header = (len(filename)+32)*bar + jump + 12*bar + filename + '  BEGINS' + 12*bar + jump + (len(filename)+32)*bar + 4*jump
     footer = 3*jump +(len(filename)+32)*bar + jump + 12*bar + filename + '  ENDS' + 14*bar + jump + (len(filename)+32)*bar + 2*jump
-    
+
     if dic:
         dic_result = dic_result + filename + jump + filename[:-4] + jump
-    
+
     if not header_footer:
         header = ''
         footer = ''
-    
+
     for line in lines:
-    
+
         if line.startswith('{'):
             indexm = re.search(r'^\{[0-9]+\}', line)
             index = line[indexm.start()+1:indexm.end()-1]
             line = line[indexm.end()+2:]
-            
+
             contentm = re.findall(r'\{(.+)\}', line)
-            
+
             if contentm:
                 content = contentm[0]
             else:
                 content = ''
-            
+
             line = content + jump
-            
+
             if indices and names:
                 line = filename[:-4] + space + index + space + line
-            
+
             elif indices and not names:
                 line = index + space + line
-            
+
             elif not indices and names:
                 line = filename[:-4] + space + line
 
 
             result_step = result_step + line
-        
+
         elif line == '\n':
             break
-        
+
         elif comments:
             line = filename[:-4] + space + line
             result_step = result_step + line
 
-                    
+
     result = result + header + result_step + footer
     result_step = ''
     left = left - 1
-    fbars = 43-len(filename) 
+    fbars = 43-len(filename)
     print (filename + ' DONE ' + '-'*fbars + '>  ' + str(left) + ' files left.')
 
 
@@ -163,6 +150,6 @@ if dic:
         input()
         exit()
 
-        
+
 print ('\n\nDONE!')
 input()

@@ -1,8 +1,10 @@
-import os
+import os, shutil
 
-from linebreak_remover import linebreak_remover, pathfinder, dircreator
+from main import pathfinder, encfinder, listdirs
+from linebreak_remover import linebreak_remover, treecreator
 from syntax_checker import syntax_checker
 from duplicate_checker import duplicate_checker
+from lazy_updater import analyzer, replacer
 
 
 outputdir = 'output'
@@ -25,13 +27,13 @@ if not thefiles:
     input()
     exit()
 
-dircreator(thefiles, outputdir)
+treecreator(thefiles, outputdir)
 
 def startcheck():
-    answer = input("Do you want to exclude the [d]efault files (fke_dude.msg and deadcomp.msg), \n\
+    answer = input("Do you want to exclude the [d]efault files (fke_dude, democomp deadcomp), \n\
 [n]one or [o]ther?: ")
     if answer in ('default','d'):
-        excluded = ['fke_dude.msg','deadcomp.msg']
+        excluded = ['fke_dude.msg', 'democomp.msg','deadcomp.msg']
     elif answer in ('none','n'):
         excluded = []
     elif answer in ('others','other','o'):
@@ -64,7 +66,7 @@ else:
     print( 'Line breaks toll: %i' % result1[3] )
     print( 'Unnecessary spaces toll: %i' % result1[4] )
     print( '========================================' )
-    
+
     input("\nAll lines breaks and unnecessary spaces have been removed.\n\
 Hit enter to continue.\n\n\n\n")
 
