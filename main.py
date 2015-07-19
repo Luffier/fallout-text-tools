@@ -17,10 +17,10 @@ def pathfinder(target = '.', excludedirs = []):
 
 def encfinder(dirname):
 
-    encoding_dic = {'latin1':['afrikaans', 'basque', 'catalan', 'danish', 'dutch',
+    encoding_dic = {'cp1252':['afrikaans', 'basque', 'catalan', 'danish', 'dutch',
     'english', 'faeroese', 'finnish', 'french', 'galician', 'german', 'icelandic',
-    'irish', 'italian', 'norwegian', 'portuguese', 'spanish', 'swedish', 'english'],
-    'latin2':['german', 'hungarian', 'romanian', 'croatian', 'slovak', 'slovene'],
+    'irish', 'italian', 'norwegian', 'portuguese', 'spanish', 'swedish'],
+    'latin2':['hungarian', 'romanian', 'croatian', 'slovak', 'slovene'],
     'cyrilic':['byelorussian', 'macedonian', 'serbian', 'ukrainian'],
     'cp866':['russian_fargus'], 'cp1251':['russian_1c'], 'cp1250':['czech', 'polish'],
     'gb18030':['chinese']}
