@@ -1,6 +1,6 @@
 import os, re, fnmatch
 
-from main import pathfinder, encfinder, listdirs
+from main import pathfinder, encfinder, listdirs, alt_open
 
 
 #Looks for lines with brackets (after discarding comments and empty lines), pairs
@@ -11,15 +11,9 @@ def syntax_checker(files, enc, fullmode=True):
 
     for afile in files:
         flag = False
-        err = None
-        while True:
-            with open(afile, 'r', encoding=enc, errors=err) as filein:
-                try:
-                    lines = filein.readlines()
-                    break
-                except UnicodeDecodeError:
-                    print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    err = 'ignore'
+
+        par = [enc, None] #parameters = [enconding, errors]
+        lines = alt_open(afile, par)
 
         if fullmode: reference = lines
 
@@ -89,7 +83,7 @@ weird bracket configuration (it would have cause a crash!)                   \
        \n" + 175*"*" + "\n\n\n"
 
     outputdir = 'output'
-    thefiles = pathfinder(excludedirs = [outputdir, '__pycache__'])
+    thefiles = pathfinder(excluded = [outputdir, '__pycache__'])
 
     if thefiles:
         inputcheck = input(start_msg).lower()
@@ -110,7 +104,7 @@ weird bracket configuration (it would have cause a crash!)                   \
 
     for dirname in dirnames:
         other_dirs = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excludedirs = other_dirs)
+        thefiles = pathfinder(excluded = other_dirs)
         enc = encfinder(dirname)
 
         print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )

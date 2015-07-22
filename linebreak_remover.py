@@ -1,6 +1,6 @@
 import os, shutil, re, fnmatch
 
-from main import pathfinder, encfinder, treecreator, listdirs
+from main import pathfinder, encfinder, treecreator, listdirs, alt_open
 
 
 #if allmode is False it will write only files with changes
@@ -24,17 +24,8 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
             continue
 
         else:
-            err = None
-            while True:
-                with open(afile, 'r', encoding=enc, errors=err) as filein:
-                    try:
-                        lines = filein.readlines()
-                        break
-                    except UnicodeDecodeError:
-                        print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                        err = 'ignore'
-
-
+            par = [enc, None] #parameters = [enconding, errors]
+            lines = alt_open(afile, par)
 
             filein_reference = ''.join(lines)
             fileout_text = ''
@@ -42,7 +33,7 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
             for line in lines:
 
                 if clsmode:
-                    line = re.sub(r'\t', ' ' *4, line)
+                    line = re.sub(r'\t', '    ', line)
                     line = re.sub(r'\/\/', '#', line)
                     line = re.sub(r'^[ ]*(\{[0-9]+\}\{.*\}\{[^{]*\})[^\}\{\r\n\t#\/ a-zA-Z0-9]+(.*)', r'\1\2', line)
 
@@ -59,6 +50,9 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
 
                 #removes any space after the final closing bracket
                 line = re.sub(r'(\})([ \t\u3000]*)$', r'\1', line)
+
+                #removes any space before the initial bracket
+                line = re.sub(r'^([ \t\u3000]*)(\{)', r'\2', line)
 
                 #line with normal or inline dev comment
                 if line.startswith('#') or m2 or m3:
@@ -123,7 +117,7 @@ Do you want the output to include all files (even those without changes)? [y]es 
 
     outputdir = 'lb-output'
 
-    thefiles = pathfinder(excludedirs = [outputdir, '__pycache__'])
+    thefiles = pathfinder(excluded = [outputdir, '__pycache__'])
 
     excluded_files = ['fke_dude.msg', 'democomp.msg','deadcomp.msg']
     mode = False
@@ -154,7 +148,7 @@ Do you want the output to include all files (even those without changes)? [y]es 
 
     for dirname in dirnames:
         dirnames0 = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excludedirs = [outputdir] + dirnames0)
+        thefiles = pathfinder(excluded = [outputdir] + dirnames0)
         enc = encfinder(dirname)
 
         print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )

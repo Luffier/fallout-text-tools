@@ -1,7 +1,7 @@
 import os, re, fnmatch
 
 
-from main import pathfinder, encfinder, listdirs
+from main import pathfinder, encfinder, listdirs, alt_open
 
 
 def startcheck(message):
@@ -17,19 +17,13 @@ def duplicate_checker(files, enc):
     result = ''
 
     for afile in files:
-        err = None
-        while True:
-            with open(afile, 'r', encoding=enc, errors=err) as filein:
-                try:
-                    lines = filein.readlines()
-                    break
-                except UnicodeDecodeError:
-                    print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    err = 'ignore'
+
+        par = [enc, None] #parameters = [enconding, errors]
+        lines = alt_open(afile, par)
 
         #remove dev comments and others
-        lines = [line for line in lines if line.startswith('#') is False]
-        lines = [line for line in lines if line.startswith('{') is True]
+        lines = [line for line in lines if not line.startswith('#')]
+        lines = [line for line in lines if line.startswith('{')]
 
         indices = [re.findall(r'^[ ]*\{([0-9]+)\}', line)[0] for line in lines]
         indices = [int(index) for index in indices]
@@ -63,7 +57,7 @@ There are no .msg files in this directory (the script makes a recursive search).
 Hit enter to quit and try again.\n"
 
 
-    thefiles = pathfinder(excludedirs = ['__pycache__'])
+    thefiles = pathfinder(excluded = ['__pycache__'])
     outputdir = 'output'
 
     if thefiles:
@@ -80,8 +74,11 @@ Hit enter to quit and try again.\n"
 
     for dirname in dirnames:
         dirnames0 = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excludedirs = [outputdir] + dirnames0)
+        thefiles = pathfinder(excluded = [outputdir] + dirnames0)
         enc = encfinder(dirname)
+
+        print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )
+
         output = duplicate_checker(thefiles, enc)
 
         if output:
@@ -90,4 +87,5 @@ Hit enter to quit and try again.\n"
                 foutput.write(output)
 
 
-    input("DONE! Congratulations, there are no duplicate lines!")
+        else:
+            input("DONE! Congratulations, there are no duplicate lines!")

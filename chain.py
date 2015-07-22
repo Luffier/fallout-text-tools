@@ -20,7 +20,7 @@ There are no .msg files in this directory (the script makes a recursive search).
 Hit enter to quit and try again.\n"
 
 
-thefiles = pathfinder(excludedirs = [outputdir])
+thefiles = pathfinder(excluded = [outputdir])
 
 if not thefiles:
     print(no_files_msg)

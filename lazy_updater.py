@@ -1,6 +1,6 @@
 import os, re, shutil, fnmatch
 
-from main import pathfinder, encfinder, listdirs
+from main import pathfinder, encfinder, listdirs, alt_open
 
 
 def startcheck(message):
@@ -22,15 +22,8 @@ def analyzer(dic, directory, enc = None):
         filename = os.path.split(afile)[-1]
         dic[directory][filename] = {}
 
-        err = None
-        while True:
-            with open(afile, 'r', encoding=enc, errors=err) as filein:
-                try:
-                    lines = filein.readlines()
-                    break
-                except UnicodeDecodeError:
-                    print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    err = 'ignore'
+        par = [enc, None] #parameters = [enconding, errors]
+        lines = alt_open(afile, par)
 
         for line in lines:
             if line.startswith('{'):
@@ -50,15 +43,8 @@ def replacer(dic, directory, enc = None):
 
         filename = os.path.split(afile)[-1]
 
-        err = None
-        while True:
-            with open(afile, 'r', encoding=enc, errors=err) as filein:
-                try:
-                    lines = filein.readlines()
-                    break
-                except UnicodeDecodeError:
-                    print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    err = 'ignore'
+        par = [enc, None] #parameters = [enconding, errors]
+        lines = alt_open(afile, par)
 
         for line in lines:
             if not dic[directory[:-4]].get(filename):
@@ -121,7 +107,7 @@ Hit enter to quit and try again.\n"
 
 
 
-    thefiles = pathfinder(excludedirs = ['__pycache__'])
+    thefiles = pathfinder(excluded = ['__pycache__'])
 
     if thefiles:
         startcheck(start_msg)
