@@ -17,15 +17,15 @@ def duplicate_checker(files, enc):
     result = ''
 
     for afile in files:
-        e = None
+        err = None
         while True:
-            with open(afile, 'r', encoding=enc, errors=e) as filein:
+            with open(afile, 'r', encoding=enc, errors=err) as filein:
                 try:
                     lines = filein.readlines()
                     break
                 except UnicodeDecodeError:
                     print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    e = 'ignore'
+                    err = 'ignore'
 
         #remove dev comments and others
         lines = [line for line in lines if line.startswith('#') is False]

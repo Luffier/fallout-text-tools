@@ -22,20 +22,19 @@ def analyzer(dic, directory, enc = None):
         filename = os.path.split(afile)[-1]
         dic[directory][filename] = {}
 
-        e = None
+        err = None
         while True:
-            with open(afile, 'r', encoding=enc, errors=e) as filein:
+            with open(afile, 'r', encoding=enc, errors=err) as filein:
                 try:
                     lines = filein.readlines()
                     break
                 except UnicodeDecodeError:
                     print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    e = 'ignore'
+                    err = 'ignore'
 
         for line in lines:
             if line.startswith('{'):
                 content = re.findall(r'\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
-                print(content)
                 index = content[0][0]
                 print('=A= =' + directory + '= =' + filename + '= =' + index + '=')
                 dic[directory][filename][index] = content[0][2]
@@ -51,15 +50,15 @@ def replacer(dic, directory, enc = None):
 
         filename = os.path.split(afile)[-1]
 
-        e = None
+        err = None
         while True:
-            with open(afile, 'r', encoding=enc, errors=e) as filein:
+            with open(afile, 'r', encoding=enc, errors=err) as filein:
                 try:
                     lines = filein.readlines()
                     break
                 except UnicodeDecodeError:
                     print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                    e = 'ignore'
+                    err = 'ignore'
 
         for line in lines:
             if not dic[directory[:-4]].get(filename):
@@ -94,6 +93,33 @@ lazy_updater.\n\
     no_files_msg = "\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\
 Hit enter to quit and try again.\n"
+
+    """
+    'rename'
+
+    'ASSBLOW':'KALNOR'
+    'BOSASIS':'BOSASIST'
+    'BOSLORI':'BOSLORRI'
+
+    'contents are now in'
+
+    'BLADE':'INBLADE'
+    'BVLAD':'BV2VAULT'
+    'COW':'BRAHMIN'
+    'DARL':'DARREL'
+    'DEMOCOMP':'DEADCOMP'
+    'DEMODOG':'ALLDOGS'
+    'DOG2':'ALLDOGS'
+    'DOGMEAT':'ALLDOGS'
+    'GENGHOUL':'HOTGHOUL'
+    'GENLOCK':'LOCKER'
+    'GHOUL':'MANAGER'
+    'HHOOKER':'HHOOKERA'
+    'JER':'JEREM'
+    'JUNKDOG':'ALLDOGS'
+    """
+
+
 
     thefiles = pathfinder(excludedirs = ['__pycache__'])
 

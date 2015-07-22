@@ -4,7 +4,7 @@ from main import pathfinder, encfinder, treecreator, listdirs
 
 
 #if allmode is False it will write only files with changes
-def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = False, clsmode = True):
+def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = False, clsmode = False):
 
     files_changed = 0
     deleted_spaces = 0
@@ -24,15 +24,15 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
             continue
 
         else:
-            e = None
+            err = None
             while True:
-                with open(afile, 'r', encoding=enc, errors=e) as filein:
+                with open(afile, 'r', encoding=enc, errors=err) as filein:
                     try:
                         lines = filein.readlines()
                         break
                     except UnicodeDecodeError:
                         print(afile + "\n  ---> There was a decoding error in this file (ignoring for now)\n")
-                        e = 'ignore'
+                        err = 'ignore'
 
 
 
@@ -58,18 +58,18 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
                     deleted_spaces = deleted_spaces + len(spaces[0])
 
                 #removes any space after the final closing bracket
-                line = re.sub(r'(\})[ \t]*$', r'\1', line)
+                line = re.sub(r'(\})([ \t]*)$', r'\1', line)
 
                 #line with normal or inline dev comment
                 if line.startswith('#') or m2 or m3:
                     spaces = re.findall(r'([ \t]*)$', line)
                     if spaces:
                         deleted_spaces = deleted_spaces + len(spaces[0])
-                    line = re.sub(r'[ \t]*$', '', line)
+                    line = re.sub(r'([ \t]*)$', '', line)
                     fileout_text = fileout_text + line
                     isBetweenBrackets = False
 
-                elif (line == '\n' or '\r' or '\r\n') and not isBetweenBrackets:
+                elif line == '\n' and not isBetweenBrackets:
                     fileout_text = fileout_text + '\n'
 
                 #line with an open bracket and a line break (main goal)
@@ -115,10 +115,10 @@ There are no .msg files in this directory (the script makes a recursive search).
 Hit enter to quit and try again.\n"
 
     exclusions_msg = "\n\
-What files do you want to exclude (case insensitive), press Enter for none? Ex: 'f1.msg f2.msg'\n"
+What files do you want to exclude (case insensitive)?, press Enter for none Ex: 'f1.msg f2.msg':\n"
 
     mode_msg = "\n\n\
-Do you want the output to include all files (even those without changes)? [y]es or [n]o"
+Do you want the output to include all files (even those without changes)? [y]es or [n]o: "
 
 
     outputdir = 'lb-output'
@@ -129,11 +129,10 @@ Do you want the output to include all files (even those without changes)? [y]es 
     mode = False
 
     if thefiles:
-
         inputcheck = input(start_msg).lower()
-        if inputcheck in ('no','n'):
+        if inputcheck not in ('yes','y','c','custom'):
             exit()
-        elif inputcheck in ('c','custom'):
+        if inputcheck in ('c','custom'):
             excluded_files = input(exclusions_msg).lower().split()
 
             mode = input(mode_msg).lower()
