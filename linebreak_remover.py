@@ -48,24 +48,24 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
 
                 if line.startswith('{'): isBetweenBrackets = True
 
-                m1 = re.findall(r'\}[ \t]*$', line) #not empty for normal -single- lines
-                m2 = re.findall(r'\}[ \t]*\#.*$', line) #not empty for lines with inline dev comments
-                m3 = re.findall(r'\}[ \t]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
+                m1 = re.findall(r'\}[ \t\u3000]*$', line) #not empty for normal -single- lines
+                m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line) #not empty for lines with inline dev comments
+                m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
 
                 #counts the number of unnecessary spaces/tabs before deleting them
-                spaces = re.findall(r'\}([ \t]*)$', line)
+                spaces = re.findall(r'\}([ \t\u3000]*)$', line)
                 if spaces:
                     deleted_spaces = deleted_spaces + len(spaces[0])
 
                 #removes any space after the final closing bracket
-                line = re.sub(r'(\})([ \t]*)$', r'\1', line)
+                line = re.sub(r'(\})([ \t\u3000]*)$', r'\1', line)
 
                 #line with normal or inline dev comment
                 if line.startswith('#') or m2 or m3:
-                    spaces = re.findall(r'([ \t]*)$', line)
+                    spaces = re.findall(r'([ \t\u3000]*)$', line)
                     if spaces:
                         deleted_spaces = deleted_spaces + len(spaces[0])
-                    line = re.sub(r'([ \t]*)$', '', line)
+                    line = re.sub(r'([ \t\u3000]*)$', '', line)
                     fileout_text = fileout_text + line
                     isBetweenBrackets = False
 
