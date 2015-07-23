@@ -1,6 +1,6 @@
 import os, shutil
 
-from main import pathfinder, encfinder, listdirs
+from main import *
 from linebreak_remover import linebreak_remover, treecreator
 from syntax_checker import syntax_checker
 from duplicate_checker import duplicate_checker

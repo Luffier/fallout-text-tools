@@ -1,6 +1,6 @@
 import os, re, fnmatch
 
-from main import pathfinder, encfinder, listdirs, alt_open
+from main import *
 
 
 #Looks for lines with brackets (after discarding comments and empty lines), pairs
@@ -13,7 +13,7 @@ def syntax_checker(files, enc, fullmode=True):
         flag = False
 
         par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_open(afile, par)
+        lines = alt_read(afile, par)
 
         if fullmode: reference = lines
 

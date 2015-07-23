@@ -1,6 +1,6 @@
-import os, re, shutil, fnmatch
+import os, re, shutil
 
-from main import pathfinder, encfinder, listdirs, alt_open
+from main import *
 
 
 def startcheck(message):
@@ -23,7 +23,7 @@ def analyzer(dic, directory, enc = None):
         dic[directory][filename] = {}
 
         par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_open(afile, par)
+        lines = alt_read(afile, par)
 
         for line in lines:
             if line.startswith('{'):
@@ -44,7 +44,7 @@ def replacer(dic, directory, enc = None):
         filename = os.path.split(afile)[-1]
 
         par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_open(afile, par)
+        lines = alt_read(afile, par)
 
         for line in lines:
             if not dic[directory[:-4]].get(filename):

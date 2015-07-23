@@ -1,7 +1,6 @@
-import os, re, fnmatch
+import os, re
 
-
-from main import pathfinder, encfinder, listdirs, alt_open
+from main import *
 
 
 def startcheck(message):
@@ -19,7 +18,7 @@ def duplicate_checker(files, enc):
     for afile in files:
 
         par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_open(afile, par)
+        lines = alt_read(afile, par)
 
         #remove dev comments and others
         lines = [line for line in lines if not line.startswith('#')]
@@ -73,8 +72,8 @@ Hit enter to quit and try again.\n"
     dirnames = listdirs(excluded = ['__pycache__'])
 
     for dirname in dirnames:
-        dirnames0 = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excluded = [outputdir] + dirnames0)
+        other_dirs = [d for d in dirnames if d is not dirname]
+        thefiles = pathfinder(excluded = [outputdir] + other_dirs)
         enc = encfinder(dirname)
 
         print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )

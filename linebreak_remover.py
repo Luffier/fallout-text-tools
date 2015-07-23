@@ -1,6 +1,6 @@
-import os, shutil, re, fnmatch
+import os, re, shutil
 
-from main import pathfinder, encfinder, treecreator, listdirs, alt_open
+from main import *
 
 
 #if allmode is False it will write only files with changes
@@ -25,7 +25,7 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
 
         else:
             par = [enc, None] #parameters = [enconding, errors]
-            lines = alt_open(afile, par)
+            lines = alt_read(afile, par)
 
             filein_reference = ''.join(lines)
             fileout_text = ''
@@ -147,8 +147,8 @@ Do you want the output to include all files (even those without changes)? [y]es 
     dirnames = listdirs(excluded = [outputdir, '__pycache__'])
 
     for dirname in dirnames:
-        dirnames0 = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excluded = [outputdir] + dirnames0)
+        other_dirs = [d for d in dirnames if d is not dirname]
+        thefiles = pathfinder(excluded = [outputdir] + other_dirs)
         enc = encfinder(dirname)
 
         print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )

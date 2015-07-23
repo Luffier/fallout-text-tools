@@ -1,6 +1,6 @@
-import os, re, fnmatch
+import os, re
 
-from main import pathfinder, encfinder
+from main import *
 
 
 thefiles = pathfinder()
@@ -34,7 +34,7 @@ comments_msg = '\nDo you want to include developer comments (# lines)? '
 indices_msg = '\nDo you want to include the index number to each line (recommended)? '
 names_msg = '\nDo you want to include the name of the file to each line (recommended)? '
 hf_msg = '\nDo you want to include a header and footer to each block of text? '
-dic_msg = '\nDo you want to generate a dictionary for MS Word (little use)? '
+dic_msg = '\nDo you want to generate a dictionary for MS Word (little use for now)? '
 
 
 
@@ -68,88 +68,98 @@ else:
 comments, indices, names, header_footer, dic = optionscheck( [comments_msg, indices_msg, names_msg, hf_msg, dic_msg] )
 
 
-print ('\n\nWORKING...\n\n')
+print('\n\nWORKING...\n\n')
 
 
+dirnames = listdirs()
+for dirname in dirnames:
 
-for afile in thefiles:
 
-    with open(afile, 'r') as filein:
-        lines = filein.readlines()
+    other_dirs = [d for d in dirnames if d is not dirname]
+    thefiles = pathfinder(excluded = other_dirs)
+    enc = encfinder(dirname)
 
-    filename = os.path.split(afile)[-1]
-    header = (len(filename)+32)*bar + jump + 12*bar + filename + '  BEGINS' + 12*bar + jump + (len(filename)+32)*bar + 4*jump
-    footer = 3*jump +(len(filename)+32)*bar + jump + 12*bar + filename + '  ENDS' + 14*bar + jump + (len(filename)+32)*bar + 2*jump
+    for afile in thefiles:
 
-    if dic:
-        dic_result = dic_result + filename + jump + filename[:-4] + jump
+        par = [enc, None] #parameters = [enconding, errors]
+        lines = alt_read(afile, par)
 
-    if not header_footer:
-        header = ''
-        footer = ''
+        filename = os.path.split(afile)[-1]
 
-    for line in lines:
+        header = (len(filename)+32)*bar + jump + 12*bar + filename + '  BEGINS' + 12*bar + jump + (len(filename)+32)*bar + 4*jump
+        footer = 3*jump +(len(filename)+32)*bar + jump + 12*bar + filename + '  ENDS' + 14*bar + jump + (len(filename)+32)*bar + 2*jump
 
-        if line.startswith('{'):
-            indexm = re.search(r'^\{[0-9]+\}', line)
-            index = line[indexm.start()+1:indexm.end()-1]
-            line = line[indexm.end()+2:]
+        if dic:
+            dic_result = dic_result + filename + jump + filename[:-4] + jump
 
-            contentm = re.findall(r'\{(.+)\}', line)
+        if not header_footer:
+            header = ''
+            footer = ''
 
-            if contentm:
-                content = contentm[0]
-            else:
-                content = ''
+        for line in lines:
 
-            line = content + jump
+            if line.startswith('{'):
+                indexm = re.search(r'^\{[0-9]+\}', line)
+                index = line[indexm.start()+1:indexm.end()-1]
+                line = line[indexm.end()+2:]
 
-            if indices and names:
-                line = filename[:-4] + space + index + space + line
+                contentm = re.findall(r'\{(.+)\}', line)
 
-            elif indices and not names:
-                line = index + space + line
+                if contentm:
+                    content = contentm[0]
+                else:
+                    content = ''
 
-            elif not indices and names:
+                line = content + jump
+
+                if indices and names:
+                    line = filename[:-4] + space + index + space + line
+
+                elif indices and not names:
+                    line = index + space + line
+
+                elif not indices and names:
+                    line = filename[:-4] + space + line
+
+
+                result_step = result_step + line
+
+            elif line == '\n':
+                break
+
+            elif comments:
                 line = filename[:-4] + space + line
+                result_step = result_step + line
 
 
-            result_step = result_step + line
-
-        elif line == '\n':
-            break
-
-        elif comments:
-            line = filename[:-4] + space + line
-            result_step = result_step + line
+        result = result + header + result_step + footer
+        result_step = ''
+        left = left - 1
+        fbars = 43-len(filename)
+        #print(filename + ' DONE ' + '-'*fbars + '>  ' + str(left) + ' files left.')
 
 
-    result = result + header + result_step + footer
-    result_step = ''
-    left = left - 1
-    fbars = 43-len(filename)
-    print (filename + ' DONE ' + '-'*fbars + '>  ' + str(left) + ' files left.')
-
-
-try:
-    with open('merged_text.txt', 'w') as output:
-        output.write(result)
-
-except PermissionError:
-    print ('\n\nERROR. merged_text.txt is open in another program. Close it and try again.\n\n')
-    input()
-    exit()
-
-if dic:
     try:
-        with open('merged_text.dic', 'w', encoding='utf16') as dic_file:
-            dic_file.write(dic_result)
+        with open('merged_text-%s.txt' % dirname, 'w', encoding = par[0]) as output:
+            output.write(result)
 
     except PermissionError:
-        print ('\n\nERROR. merged_text.dic is open in another program. Close it and try again.\n\n')
+        print('\n\nERROR. merged_text.txt is open in another program. Close it and try again.\n\n')
         input()
         exit()
 
+    if dic:
+        try:
+            with open('merged_text.dic', 'w', encoding = 'utf_16') as dic_file:
+                dic_file.write(dic_result)
 
-print ('\n\nDONE!')
+        except PermissionError:
+            print('\n\nERROR. merged_text.dic is open in another program. Close it and try again.\n\n')
+            input()
+            exit()
+
+
+    print('\n\n%s done!' % dirname)
+
+print('ALL DONE!')
 input()
