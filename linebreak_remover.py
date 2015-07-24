@@ -42,6 +42,7 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
                 m1 = re.findall(r'\}[ \t\u3000]*$', line) #not empty for normal -single- lines
                 m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line) #not empty for lines with inline dev comments
                 m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
+                m4 = re.findall(r'\}[ ]*([^ \{\}\#\/\s])+.*$', line) #not empty for lines with text outside comments or brackets
 
                 #counts the number of unnecessary spaces/tabs before deleting them
                 spaces = re.findall(r'\}([ \t\u3000]*)$', line)
@@ -65,6 +66,9 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
 
                 elif line == '\n' and not isBetweenBrackets:
                     fileout_text = fileout_text + '\n'
+
+                elif m4:
+                    fileout_text = fileout_text + line
 
                 #line with an open bracket and a line break (main goal)
                 elif not m1 and isBetweenBrackets:

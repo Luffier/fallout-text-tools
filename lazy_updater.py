@@ -80,32 +80,6 @@ lazy_updater.\n\
 There are no .msg files in this directory (the script makes a recursive search).\n\
 Hit enter to quit and try again.\n"
 
-    """
-    'rename'
-
-    'ASSBLOW':'KALNOR'
-    'BOSASIS':'BOSASIST'
-    'BOSLORI':'BOSLORRI'
-
-    'contents are now in'
-
-    'BLADE':'INBLADE'
-    'BVLAD':'BV2VAULT'
-    'COW':'BRAHMIN'
-    'DARL':'DARREL'
-    'DEMOCOMP':'DEADCOMP'
-    'DEMODOG':'ALLDOGS'
-    'DOG2':'ALLDOGS'
-    'DOGMEAT':'ALLDOGS'
-    'GENGHOUL':'HOTGHOUL'
-    'GENLOCK':'LOCKER'
-    'GHOUL':'MANAGER'
-    'HHOOKER':'HHOOKERA'
-    'JER':'JEREM'
-    'JUNKDOG':'ALLDOGS'
-    """
-
-
 
     thefiles = pathfinder(excluded = ['__pycache__'])
 
