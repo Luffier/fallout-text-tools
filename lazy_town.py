@@ -36,18 +36,30 @@ def analyzer(directory, enc = None):
 
 def comparator(base, newbase, target):
     threshold = 0.90
+
+    above_threshold = 0
+    below_threshold = 0
+    not_found = 0
+
     diff = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio() # :)
+
     newtarget = newbase
+
     for afile in base.keys(): #for every filename in base (original english files)
         if newbase.get(afile): #only if it exists in newbase (Fixt's english files)
             for index in base[afile].keys(): #for every index in filename
                 if newbase[afile].get(index): #only if it exists in Fixt's file
-                    #if the difference between the two strings are lower than the threshold
-                    if diff( base[afile].get(index), newbase[afile].get(index) ) > threshold:
-                        if target[afile].get(index): #in case the translation isn't complete?
+                    #if the difference ratio between the two strings is above the threshold
+                    if diff( base[afile].get(index), newbase[afile].get(index) ) >= threshold:
+                        if target[afile].get(index): #and the translation wasn't complete (?)
                             newtarget[afile][index] = target[afile][index] #the old content is copied
+                            above_threshold += 1
                         else:
-                            print('%s %s' % (afile, index))
+                            print("Content not found in target (%s %s)" % (afile, index))
+                            not_found += 1
+                    else:
+                        below_threshold += 1
+    print("There were %i lines above the threshold, %i below and %i were missing." % (above_threshold, below_threshold, not_found))
     return newtarget
 
 
@@ -56,7 +68,7 @@ def comparator(base, newbase, target):
 def injector(dic, directory, enc = None):
 
     thefiles = pathfinder(target = os.path.join('.', directory))
-    out_enc = encfinder(directory)
+    target_enc = encfinder(directory)
 
     for afile in thefiles:
 
@@ -86,7 +98,7 @@ def injector(dic, directory, enc = None):
 
         err = None
         while True:
-            fileout = open(afile, 'w', encoding = out_enc, errors = err)
+            fileout = open(afile, 'w', encoding = target_enc, errors = err)
             try:
                 fileout.write(fileout_text)
                 err = None
@@ -94,7 +106,7 @@ def injector(dic, directory, enc = None):
 
             except UnicodeEncodeError:
                 err = 'ignore'
-                print('ERRRRRROR %s' % filename)
+                print(afile + "\n ---> Decoding error (using %s) (ignoring for now; information will be lost)\n" % target_enc)
 
             fileout.close()
 
@@ -115,30 +127,30 @@ if __name__ == '__main__':
         input()
         exit()
 
+
+    base = 'ENGLISH'
+    base_new = 'ENGLISH_FIXT'
+    target = input("\nType the name of the language/folder to work with: ")
+    while not os.path.isdir(target):
+        target = input("\nThe folder does not exist, try again: ")
+    target_new = target + '_NEW'
+
+
+
+    base_enc = encfinder(base)
+    target_enc = encfinder(target)
+    output_path = os.path.join('.', target_new)
+
     print ("\n\nWORKING...\n\n")
 
+    base_dic = analyzer(base, base_enc)
+    base_new_dic = analyzer(base_new, base_enc)
+    target_dic = analyzer(target, target_enc)
 
-    english_base = 'ENGLISH'
-    english_new = 'ENGLISH_FIXT'
-    target_base = 'CZECH'
-    target_new = 'CZECH_NEW'
+    target_new_dic = comparator(base_dic, base_new_dic, target_dic)
 
-    output = 'lu-output'
-
-    output_path = os.path.join('.', output, target_new)
-
-    enc = 'cp1252'
-    english_base_dic = analyzer(english_base, enc)
-    english_new_dic = analyzer(english_new, enc)
-    enc = 'cp1250'
-    target_base_dic = analyzer(target_base, enc)
-
-
-    target_new_dic = comparator(english_base_dic, english_new_dic, target_base_dic)
-
-    enc = 'cp1252'
-    shutil.copytree(english_new, output_path)
-    injector(target_new_dic, output_path, enc)
+    shutil.copytree(base_new, output_path)
+    injector(target_new_dic, output_path, base_enc)
 
 
     input()
