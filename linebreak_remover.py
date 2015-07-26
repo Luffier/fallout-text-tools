@@ -1,6 +1,6 @@
 import os, re, shutil
 
-from main import *
+from common import *
 
 
 #if allmode is False it will write only files with changes

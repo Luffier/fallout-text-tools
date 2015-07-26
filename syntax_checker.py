@@ -1,6 +1,6 @@
 import os, re, fnmatch
 
-from main import *
+from common import *
 
 
 #Looks for lines with brackets (after discarding comments and empty lines), pairs

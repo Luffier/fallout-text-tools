@@ -1,6 +1,6 @@
 import os, re
 
-from main import *
+from common import *
 
 
 thefiles = pathfinder()
