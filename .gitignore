@@ -54,3 +54,6 @@ docs/_build/
 
 # Testing
 test.py
+*.msg
+*.txt
+*.sve
