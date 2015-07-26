@@ -7,12 +7,12 @@ except ImportError:
     import difflib
     isLevenshtein = False
 
-from main import *
+from common import *
 from lazy_town import analyzer
 
 
 #logs similar lines in a given dic; not very usuful as of now
-def same_file_comparator(dic, threshold = (1, 0.9):
+def similarity_finder(dic, threshold = (1, 0.9)):
 
     above_threshold = 0
     below_threshold = 0
@@ -71,25 +71,40 @@ def mismatch_finder(base, target):
 
 if __name__ == '__main__':
 
-    base = 'ENGLISH_FIXT'
-    if not os.path.isdir(base):
-        input("\n%s folder missing. Aborting..." % base)
-        exit()
-    target = 'SPANISH_MALE'
+    if int(input("Option: ")) == 1:
 
-    dirnames = listdirs(excluded = [base])
-    for i in range(len(dirnames)):
-        print("%i) %s" % (i, dirnames[i]))
+        base = 'ENGLISH_FIXT'
+        if not os.path.isdir(base):
+            input("\n%s folder missing. Aborting..." % base)
+            exit()
+        target = 'SPANISH_MALE'
 
-    target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+        dirnames = listdirs(excluded = [base])
+        for i in range(len(dirnames)):
+            print("%i) %s" % (i, dirnames[i]))
+
+        target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
 
 
-    target_enc = encfinder(target)
-    base_enc = encfinder(base)
+        target_enc = encfinder(target)
+        base_enc = encfinder(base)
 
-    target_dic = analyzer(target, target_enc)
-    base_dic = analyzer(base, base_enc)
+        target_dic = analyzer(target, target_enc)
+        base_dic = analyzer(base, base_enc)
 
-    result = mismatch_finder(base_dic, target_dic)
-    with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
-        fileout.write(result)
+        result = mismatch_finder(base_dic, target_dic)
+        with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
+            fileout.write(result)
+    else:
+
+        dirnames = listdirs()
+        for i in range(len(dirnames)):
+            print("%i) %s" % (i, dirnames[i]))
+        target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+
+        target_enc = encfinder(target)
+        target_dic = analyzer(target, target_enc)
+
+        result = similarity_finder(target_dic)
+        with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
+            fileout.write(result)
