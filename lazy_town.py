@@ -1,6 +1,13 @@
-import os, re, shutil, difflib
+import os, re, shutil
 
-from main import *
+try:
+    import Levenshtein
+    isLevenshtein = True
+except ImportError:
+    import difflib
+    isLevenshtein = False
+
+from common import *
 
 
 def startcheck(message):
@@ -27,21 +34,26 @@ def analyzer(directory, enc = None):
         for line in lines:
             if line.startswith('{'):
                 content = re.findall(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
-                index = content[0][0]
-                #print('=A= =' + filename + '= =' + index + '=')
-                data[filename][index] = content[0][2]
+                try:
+                    index = content[0][0]
+                    data[filename][index] = content[0][2]
+                except IndexError:
+                    input("There are ")
+                    exit()
 
     return data
 
 
-def comparator(base, newbase, target):
-    threshold = 0.90
+def comparator(base, newbase, target, threshold = 0.9):
 
     above_threshold = 0
     below_threshold = 0
     not_found = 0
 
-    diff = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio() # :)
+    if isLevenshtein:
+        ratio = lambda x, y: Levenshtein.ratio(x, y)
+    else:
+        ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
 
     newtarget = newbase
 
@@ -50,7 +62,7 @@ def comparator(base, newbase, target):
             for index in base[afile].keys(): #for every index in filename
                 if newbase[afile].get(index): #only if it exists in Fixt's file
                     #if the difference ratio between the two strings is above the threshold
-                    if diff( base[afile].get(index), newbase[afile].get(index) ) >= threshold:
+                    if ratio( base[afile].get(index), newbase[afile].get(index) ) >= threshold:
                         if target[afile].get(index): #and the translation wasn't complete (?)
                             newtarget[afile][index] = target[afile][index] #the old content is copied
                             above_threshold += 1
@@ -60,6 +72,7 @@ def comparator(base, newbase, target):
                     else:
                         below_threshold += 1
     print("There were %i lines above the threshold, %i below and %i were missing." % (above_threshold, below_threshold, not_found))
+
     return newtarget
 
 
