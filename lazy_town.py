@@ -5,19 +5,14 @@ try:
     isLevenshtein = True
 except ImportError:
     import difflib
+    print("Levenshtein module not found, using difflib instead")
     isLevenshtein = False
 
 from common import *
 
 
-def startcheck(message):
-    inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'):
-        pass
-    else:
-        exit()
-
-
+#makes a dictionary with the content of .msg files found in a given directory
+#dictionary structure: {'filename':{'index':'line content'}}
 def analyzer(directory, enc = None):
 
     data = {}
@@ -38,12 +33,17 @@ def analyzer(directory, enc = None):
                     index = content[0][0]
                     data[filename][index] = content[0][2]
                 except IndexError:
-                    input("There are ")
+                    input("There are syntax errors in %s:\n\nLine content: '%s'\n\nAborting..." % (afile, line))
                     exit()
 
     return data
 
 
+#base => English files used during the localization process
+#newbase => current English files
+#target => localization files
+#merges newbase and target by comparing base and newbase, if the two lines have
+#a similarity ratio higher than the threshold value, the target content is used
 def comparator(base, newbase, target, threshold = 0.9):
 
     above_threshold = 0
@@ -76,8 +76,7 @@ def comparator(base, newbase, target, threshold = 0.9):
     return newtarget
 
 
-
-
+#copies the dictionary's content into the .msg files inside directory
 def injector(dic, directory, enc = None):
 
     thefiles = pathfinder(target = os.path.join('.', directory))
@@ -97,7 +96,6 @@ def injector(dic, directory, enc = None):
             if line.startswith('{'):
                 content = re.search(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
                 index = content.group(1)
-                #print('=R= =' + filename + '= =' + index + '=')
                 if index in dic[filename]:
                     if content.group(3):
                         line = line[:content.start(3)] + dic[filename][index] + line[content.end(3):]
@@ -124,9 +122,11 @@ def injector(dic, directory, enc = None):
             fileout.close()
 
 
+
 if __name__ == '__main__':
 
-    start_msg = "[y]es and hit enter to proceed or anything else to quit: "
+    start_msg = "Using ENGLISH_BASE and ENGLISH_FIXT\n\
+[y]es and hit enter to proceed or anything else to quit: "
 
     no_files_msg = "There are no .msg files"
 
@@ -134,27 +134,40 @@ if __name__ == '__main__':
     thefiles = pathfinder(excluded = ['__pycache__'])
 
     if thefiles:
-        startcheck(start_msg)
+        inputcheck = input(start_msg).lower()
+        if inputcheck in ('yes','y'):
+            pass
+        else:
+            exit()
     else:
         print(no_files_msg)
         input()
         exit()
 
 
-    base = 'ENGLISH'
+    base = 'ENGLISH_BASE'
     base_new = 'ENGLISH_FIXT'
-    target = input("\nType the name of the language/folder to work with: ")
-    while not os.path.isdir(target):
-        target = input("\nThe folder does not exist, try again: ")
+    if not os.path.isdir(base):
+        input("\n%s folder missing. Aborting..." % base)
+        exit()
+    if not os.path.isdir(base_new):
+        input("\n%s folder missing. Aborting..." % base_new)
+        exit()
+
+    dirnames = listdirs(excluded = [base, base_new])
+    for i in range(len(dirnames)):
+        print("%i) %s" % (i, dirnames[i]))
+
+    target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+
     target_new = target + '_NEW'
-
-
+    if os.path.isdir(target_new): shutil.rmtree(target_new)
 
     base_enc = encfinder(base)
     target_enc = encfinder(target)
     output_path = os.path.join('.', target_new)
 
-    print ("\n\nWORKING...\n\n")
+    print("\n\nWORKING...\n\n")
 
     base_dic = analyzer(base, base_enc)
     base_new_dic = analyzer(base_new, base_enc)
@@ -165,5 +178,4 @@ if __name__ == '__main__':
     shutil.copytree(base_new, output_path)
     injector(target_new_dic, output_path, base_enc)
 
-
-    input()
+    input("\n\nALL DONE!\n\n")
