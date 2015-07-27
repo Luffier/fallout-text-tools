@@ -1,169 +1,101 @@
-import os, shutil, re, fnmatch
+import os, re, shutil
+
+from common import *
 
 
-def pathfinder(target = '.', excludedirs = []):
-    filespaths = []
-    for root, dirnames, filenames in os.walk(target):
-        
-        if excludedirs:
-            for exclusion in excludedirs:
-                if exclusion in dirnames:
-                    dirnames.remove(exclusion)
-        
-        for filename in fnmatch.filter(filenames, '*.msg'):
-            filespaths.append(os.path.join(root, filename))
-    
-    return filespaths
-    
-
-def startcheck(message):
-    inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'):
-        custom = False
-    elif inputcheck in ('c','custom'):
-        custom = True
-    else:
-        exit()
-    return custom
-
-
-#to be changed
-def optionscheck(questions):
-    answers = []
-    
-    inputcheck_ex = input(questions[0]).lower()
-    
-    if inputcheck_ex:
-        inputcheck_ex = tuple( inputcheck_ex.split() )
-    else:
-        inputcheck_ex = False
-    
-    inputcheck_mode = input(questions[1]).lower()
-    
-    if inputcheck_mode in ('yes','y'):
-        inputcheck_mode = True
-    else:
-        inputcheck_mode = False
-    
-    return inputcheck_ex, inputcheck_mode
-
-    
-def dircreator(files, output_root):
-    
-    ndirs = 0
-    
-    if not os.path.exists(output_root):
-        os.makedirs(output_root)
-    
-    for file in files:
-        
-        fullpath = os.path.dirname(file)
-        dirpath = os.path.join('.', output_root, fullpath[2:])
-        
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-            ndirs = ndirs + 1
-    
-    return ndirs
-    
 #if allmode is False it will write only files with changes
-def linebreak_remover(files, output_root, excluded = [], allmode = False, clsmode = False):
-    
+def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = False, clsmode = False):
+
     files_changed = 0
     deleted_spaces = 0
     deleted_linebreaks = 0
-    
-    #if not argument given Python treats it as a False; it needs to be an empty list
-    if not excluded: 
-        excluded = []
+    isBetweenBrackets = False
 
-    for file in files:
-        
-        fileout_path = os.path.join('.', output_root, file[2:])
-        filename = os.path.split(file)[-1]
-        
+
+    for afile in files:
+
+        fileout_path = os.path.join('.', output_root, afile[2:])
+        filename = os.path.split(afile)[-1]
+
         if filename.lower() in excluded:
 
             if allmode:
-                shutil.copy(file, fileout_path)
+                shutil.copy(afile, fileout_path)
             continue
 
         else:
-
-            with open(file, 'r') as filein:
-                lines = filein.readlines()
+            par = [enc, None] #parameters = [enconding, errors]
+            lines = alt_read(afile, par)
 
             filein_reference = ''.join(lines)
-            
             fileout_text = ''
 
             for line in lines:
-            
+
                 if clsmode:
-                    line = re.sub(r'\t', ' ' *4, line)
+                    line = re.sub(r'\t', '    ', line)
                     line = re.sub(r'\/\/', '#', line)
-                
-                m1 = re.findall(r'\}[ \t]*$', line) #not empty for normal -single- lines
-                m2 = re.findall(r'\}[ \t]*\#.*$', line) #not empty for lines with inline dev comments
-                m3 = re.findall(r'\}[ \t]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
+                    line = re.sub(r'^[ ]*(\{[0-9]+\}\{.*\}\{[^{]*\})[^\}\{\r\n\t#\/ a-zA-Z0-9]+(.*)', r'\1\2', line)
+
+                if line.startswith('{'): isBetweenBrackets = True
+
+                m1 = re.findall(r'\}[ \t\u3000]*$', line) #not empty for normal -single- lines
+                m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line) #not empty for lines with inline dev comments
+                m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
+                m4 = re.findall(r'\}[ ]*([^ \{\}\#\/\s])+.*$', line) #not empty for lines with text outside comments or brackets
 
                 #counts the number of unnecessary spaces/tabs before deleting them
-                spaces = re.findall(r'\}([ \t]*)$', line)
+                spaces = re.findall(r'\}([ \t\u3000]*)$', line)
                 if spaces:
                     deleted_spaces = deleted_spaces + len(spaces[0])
-                
+
                 #removes any space after the final closing bracket
-                line = re.sub(r'(\})[ \t]*$', r'\1', line)
-           
-                #dev comment line
-                if line.startswith('#'):
-                    fileout_text = fileout_text + line
-                    
-                    spaces = re.findall(r'([ \t]*)$', line)
+                line = re.sub(r'(\})([ \t\u3000]*)$', r'\1', line)
+
+                #removes any space before the initial bracket
+                line = re.sub(r'^([ \t\u3000]*)(\{)', r'\2', line)
+
+                #line with normal or inline dev comment
+                if line.startswith('#') or m2 or m3:
+                    spaces = re.findall(r'([ \t\u3000]*)$', line)
                     if spaces:
                         deleted_spaces = deleted_spaces + len(spaces[0])
-                    line = re.sub(r'[ \t]*$', '', line)
-                    
-                #line with inline dev comment; could be merge with the above
-                elif m2 or m3:
-                    
-                    spaces = re.findall(r'([ \t]*)$', line)
-                    if spaces:
-                        deleted_spaces = deleted_spaces + len(spaces[0])
-                    line = re.sub(r'[ \t]*$', '', line)
-                    
+                    line = re.sub(r'([ \t\u3000]*)$', '', line)
                     fileout_text = fileout_text + line
-                
-                    
-                #needed for some reason
-                elif line == '\n':
+                    isBetweenBrackets = False
+
+                elif line == '\n' and not isBetweenBrackets:
                     fileout_text = fileout_text + '\n'
-                
+
+                elif m4:
+                    fileout_text = fileout_text + line
+
                 #line with an open bracket and a line break (main goal)
-                elif not m1:
+                elif not m1 and isBetweenBrackets:
                     fileout_text = fileout_text + line.replace('\n','')
                     deleted_linebreaks = deleted_linebreaks + 1
 
                 #write if it doesn't fit the above categories
                 else:
                     fileout_text = fileout_text + line
-            
+                    isBetweenBrackets = False
+
             if fileout_text != filein_reference:
-                
-                files_changed = files_changed + 1 
-                with open(fileout_path, 'w') as fileout:
+
+                files_changed = files_changed + 1
+                with open(fileout_path, 'w', encoding=enc) as fileout:
                     fileout.write(fileout_text)
-            
+
             elif allmode:
-               
-               shutil.copy(file, fileout_path)
-            
+
+               shutil.copy(afile, fileout_path)
+
     return [len(files), len(excluded), files_changed, deleted_linebreaks, deleted_spaces]
 
 
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     start_msg = "\n\
 This script opens Fallout .msg files, looks for break lines,\n\
@@ -171,7 +103,7 @@ removes them and saves the changes (with the same directory structure)\n\
 in a directory called 'output'. This will also remove unnecessary spaces.\n\
 \n\
 Default settings:\n\
-* fke_dude.msg and deadcomp.msg are excluded\n\
+* fke_dude, deadcomp and democomp are excluded\n\
 * the script will only output files with changes\n\
 \n\n\
 [y]es to proceed, [c]ustom to change the settings or anything else to quit: "
@@ -181,46 +113,56 @@ There are no .msg files in this directory (the script makes a recursive search).
 Hit enter to quit and try again.\n"
 
     exclusions_msg = "\n\
-What files do you want to exclude (case insensitive)? Ex: 'f1.msg f2.msg'\n"
-    
+What files do you want to exclude (case insensitive)?, press Enter for none Ex: 'f1.msg f2.msg':\n"
+
     mode_msg = "\n\n\
-Do you want the output to include all files (even those without changes)? "
-    
-    outputdir = 'output'
+Do you want the output to include all files (even those without changes)? [y]es or [n]o: "
 
-    thefiles = pathfinder(excludedirs = [outputdir])
 
-    excluded_files = ['fke_dude.msg','deadcomp.msg']
+    outputdir = 'lb-output'
+
+    thefiles = pathfinder(excluded = [outputdir, '__pycache__'])
+
+    excluded_files = ['fke_dude.msg', 'democomp.msg','deadcomp.msg']
     mode = False
-    
+
     if thefiles:
-        
-        if startcheck(start_msg):
-            excluded, mode = ( optionscheck( [exclusions_msg, mode_msg] ) )
-            
-            if excluded:
-                excluded_files = excluded
-        
+        inputcheck = input(start_msg).lower()
+        if inputcheck not in ('yes','y','c','custom'):
+            exit()
+        if inputcheck in ('c','custom'):
+            excluded_files = input(exclusions_msg).lower().split()
+
+            mode = input(mode_msg).lower()
+            if mode in ('yes','y'):
+                mode = True
+            else:
+                mode = False
 
     else:
-        print(no_files_msg)
-        input()
+        input(no_files_msg)
         exit()
-    
-    
-    dircreator(thefiles, outputdir)
 
 
     print ("\n\nWORKING...\n\n")
 
+    treecreator(thefiles, outputdir)
 
-    results = linebreak_remover(thefiles, outputdir, excluded = excluded_files, allmode = mode)
+    dirnames = listdirs(excluded = [outputdir, '__pycache__'])
 
-    
-    print( 'Number of files: %i (%i excluded)' % (results[0], results[1]) )
-    print( 'Number of files changed: %i' % results[2] )
-    print( 'Line breaks toll: %i' % results[3] )
-    print( 'Unnecessary spaces toll: %i' % results[4] )
-    print ("\n\nDONE!")
+    for dirname in dirnames:
+        other_dirs = [d for d in dirnames if d is not dirname]
+        thefiles = pathfinder(excluded = [outputdir] + other_dirs)
+        enc = encfinder(dirname)
 
-    input()
+        print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )
+
+        results = linebreak_remover(thefiles, outputdir, enc = enc, excluded = excluded_files, allmode = mode)
+
+        print( " - Number of files: %i (%i excluded)" % (results[0], results[1]) )
+        print( " - Number of files changed: %i" % results[2] )
+        print( " - Line breaks toll: %i" % results[3] )
+        print( " - Unnecessary spaces toll: %i" % results[4] )
+        print( "   %s completed!\n" % dirname )
+
+    input("\nALL DONE!")
