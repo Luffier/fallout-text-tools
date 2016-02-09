@@ -3,7 +3,7 @@ import os, re, fnmatch
 from common import *
 
 
-#Looks for lines with brackets (after discarding comments and empty lines), pairs
+#looks for lines with brackets (after discarding comments and empty lines), pairs
 #them and flags if there's more than 3 pairs or a non-numeric character is found
 #on the index section.
 def syntax_checker(files, enc, fullmode=True):
@@ -50,8 +50,6 @@ def syntax_checker(files, enc, fullmode=True):
         flag = False
 
     return result
-
-
 
 
 if __name__ == '__main__':

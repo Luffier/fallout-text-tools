@@ -77,7 +77,7 @@ def comparator(base, newbase, target, threshold = 0.9):
 
 
 #copies the dictionary's content into the .msg files inside directory
-def injector(dic, directory, enc = None):
+def injector(loc_dict, directory, enc = None):
 
     thefiles = pathfinder(target = os.path.join('.', directory))
     target_enc = encfinder(directory)
@@ -96,9 +96,9 @@ def injector(dic, directory, enc = None):
             if line.startswith('{'):
                 content = re.search(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
                 index = content.group(1)
-                if index in dic[filename]:
+                if index in loc_dict[filename]:
                     if content.group(3):
-                        line = line[:content.start(3)] + dic[filename][index] + line[content.end(3):]
+                        line = line[:content.start(3)] + loc_dict[filename][index] + line[content.end(3):]
                 fileout_text = fileout_text + line
 
             elif line == '\n':
@@ -120,7 +120,6 @@ def injector(dic, directory, enc = None):
                 print(afile + "\n ---> Decoding error (using %s) (ignoring for now; information will be lost)\n" % target_enc)
 
             fileout.close()
-
 
 
 if __name__ == '__main__':

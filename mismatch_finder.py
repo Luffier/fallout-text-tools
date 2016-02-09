@@ -13,8 +13,8 @@ from common import *
 from lazy_town import analyzer
 
 
-#logs similar lines in a given dic; not very usuful as of now
-def similarity_finder(dic, threshold = (1, 0.9)):
+#logs similar lines in a loc_dict (analyzer); not very usuful as of now
+def similarity_finder(loc_dict, threshold = (1, 0.9)):
 
     above_threshold = 0
     below_threshold = 0
@@ -28,14 +28,14 @@ def similarity_finder(dic, threshold = (1, 0.9)):
 
     flag = False
     count = 0
-    count_total = len(dic.keys())
-    for afile in dic.keys():
-        for index1, index2 in itertools.combinations(dic[afile], 2):
-            if threshold[0] > ratio( dic[afile].get(index1), dic[afile].get(index2) ) >= threshold[1]:
+    count_total = len(loc_dict.keys())
+    for afile in loc_dict.keys():
+        for index1, index2 in itertools.combinations(loc_dict[afile], 2):
+            if threshold[0] > ratio( loc_dict[afile].get(index1), loc_dict[afile].get(index2) ) >= threshold[1]:
                 if not flag: output_text += "\n\n%s\n\n" % afile
                 flag = True
                 above_threshold += 1
-                output_text += "    %s --> %s\n    %s --> %s" % (index1, dic[afile].get(index1), index2, dic[afile].get(index2))
+                output_text += "    %s --> %s\n    %s --> %s" % (index1, loc_dict[afile].get(index1), index2, loc_dict[afile].get(index2))
             else:
                 below_threshold += 1
         flag = False
@@ -43,11 +43,12 @@ def similarity_finder(dic, threshold = (1, 0.9)):
         sys.stdout.write("\r%s/%s" % (count, count_total))
         sys.stdout.flush()
     print("\n\nThere were %i lines above the threshold and %i below." % (above_threshold, below_threshold))
-
     return output_text
 
-#if two lines are the same in the English files (base) then checks if those same
-#lines aren't in the target localization
+
+#checks when two lines that are the same in the base language aren't in the
+#target, helpfull for spoting inaccuracies and mantain a consistent localization
+#this is done in a file basis
 def mismatch_finder(base, target):
 
     output_text = ''
@@ -60,19 +61,22 @@ def mismatch_finder(base, target):
             if base[afile].get(index1) == base[afile].get(index2):
                 if target[afile].get(index1) != target[afile].get(index2):
                     if not flag:
-                        output_text += "\n\n%s\n\n" % afile
+                        output_text += "\n\n%s{\n" % afile
                     flag = True
-                    output_text += "\n    %s --> '%s'\n    %s --> '%s'\n" % (index1, target[afile].get(index1), index2, target[afile].get(index2))
+                    output_text += "\n %7s --> '%s'" % (index1, target[afile].get(index1))
+                    output_text += "\n %7s --> '%s'" % (index2, target[afile].get(index2))
+                    output_text += "\n      EN --> '%s'\n" % (base[afile].get(index1))
+        if flag:
+            output_text += "\n}"
         flag = False
     return output_text
 
 
-
 #similar to mismatch_finder but on a global scale (expect it to be very slow)
-#it compares every line with the rest, across all files, meaning that with 42.116
-#lines (Fixt 0.81) there's a total of 886.857.670 of pairs (without repetitions)
-#to compare, at 1.880.000 lines per second (avarage in my computer) it would take
-#around 8 minutes
+#it compares every line with the rest, across all files, meaning that with
+#42.116 lines (Fixt 0.81) there's a total of 886.857.670 pairs (w/o repetitions)
+#to compare, at 1.880.000 lines per second (avarage in my computer) it would
+#take around 8 minutes.
 def mismatch_finder_global(base, target):
 
     output_text = ''
@@ -93,7 +97,7 @@ def mismatch_finder_global(base, target):
     fname_pattern = re.compile(r'[0-9]{3,5}')
     index_pattern = re.compile(r'.*\.MSG', re.I)
     print("\nTotal pairs: %s\n" % count_total)
-
+    
     for address1, address2 in itertools.combinations(target_alt, 2):
         if base_alt.get(address1) == base_alt.get(address2):
             if target_alt.get(address1) != target_alt.get(address2):
@@ -104,14 +108,17 @@ def mismatch_finder_global(base, target):
                 flag = True
                 index1 = index_pattern.sub('', address1)
                 index2 = index_pattern.sub('', address2)
-                output_text += "\n    %s --> '%s'\n    %s --> '%s'\n" % (index1, target_alt.get(address1), index2, target_alt.get(address2))
+                output_text += "\n %7s --> '%s'\n" % (index1, target_alt.get(address1))
+                output_text += "\n %7s --> '%s'\n" % (index2, target_alt.get(address2))
+                output_text += "\n      EN --> '%s'\n" % (index1, base_alt.get(address1))
         flag = False
+
     return output_text
 
 
 if __name__ == '__main__':
 
-    option = int(input("Option 1, 2 or 3?: "))
+    option = int(input("'ENGLISH_FIXT' as base.\nmismatch_finder (1), mismatch_finder_global (2) or similarity_finder (3)?: "))
 
     if option == 1:
         base = 'ENGLISH_FIXT'

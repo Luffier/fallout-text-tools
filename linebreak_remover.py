@@ -93,8 +93,6 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
     return [len(files), len(excluded), files_changed, deleted_linebreaks, deleted_spaces]
 
 
-
-
 if __name__ == '__main__':
 
     start_msg = "\n\
