@@ -110,7 +110,7 @@ def mismatch_finder_global(base, target):
                 index2 = index_pattern.sub('', address2)
                 output_text += "\n %7s --> '%s'\n" % (index1, target_alt.get(address1))
                 output_text += "\n %7s --> '%s'\n" % (index2, target_alt.get(address2))
-                output_text += "\n      EN --> '%s'\n" % (index1, base_alt.get(address1))
+                output_text += "\n      EN --> '%s'\n" % (base_alt.get(address1))
         flag = False
 
     return output_text
@@ -182,17 +182,19 @@ if __name__ == '__main__':
             result = similarity_finder(target_dic)
             with open('sf_result.txt', 'w', encoding = target_enc) as fileout:
                 fileout.write(result)
+
+
     else:
-        par = ArgumentParser()
+        par = argparse.ArgumentParser()
         par.add_argument("base", help="Base localization folder")
         par.add_argument("target", help="Target localization folder")
-        par.add_argument("-n", "--normal", action="store_false", help="Normal mode")
-        par.add_argument("-g", "--global", action="store_false", help="Global mode")
-        par.add_argument("-c", "--clearcache", action="store_false", help="Clears json cache files")
+        par.add_argument("-n", "--normalmode", action="store_true", help="Normal mode")
+        par.add_argument("-g", "--globalmode", action="store_true", help="Global mode")
+        par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
 
 
         args = par.parse_args()
-
+        print(args.globalmode,args.normalmode)
         if not os.path.isdir(args.base):
             input("\n%s folder missing. Aborting..." % args.base)
             exit()
@@ -203,12 +205,12 @@ if __name__ == '__main__':
         target_dic = analyzer(args.target, target_enc)
         base_dic = analyzer(args.base, base_enc)
 
-        if args.normal:
-            result = mismatch_finder(args.base, target_dic)
+        if args.normalmode:
+            result = mismatch_finder(base_dic, target_dic)
             with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
                 fileout.write(result)
 
-        if args.global:
-            result = mismatch_finder_global(args.base, target_dic)
+        if args.globalmode:
+            result = mismatch_finder_global(base_dic, target_dic)
             with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
                 fileout.write(result)
