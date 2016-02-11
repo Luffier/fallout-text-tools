@@ -1,4 +1,4 @@
-import os, re, sys, shutil, itertools
+import os, re, sys, argparse, shutil, itertools
 from math import factorial
 
 
@@ -118,65 +118,97 @@ def mismatch_finder_global(base, target):
 
 if __name__ == '__main__':
 
-    option = int(input("'ENGLISH_FIXT' as base.\nmismatch_finder (1), mismatch_finder_global (2) or similarity_finder (3)?: "))
+    if len(sys.argv) == 1:
 
-    if option == 1:
-        base = 'ENGLISH_FIXT'
-        if not os.path.isdir(base):
-            input("\n%s folder missing. Aborting..." % base)
+        option = int(input("'ENGLISH_FIXT' as base.\nmismatch_finder (1), mismatch_finder_global (2) or similarity_finder (3)?: "))
+
+        if option == 1:
+            base = 'ENGLISH_FIXT'
+            if not os.path.isdir(base):
+                input("\n%s folder missing. Aborting..." % base)
+                exit()
+
+            dirnames = listdirs(excluded = [base])
+            for i in range(len(dirnames)):
+                print("%i) %s" % (i, dirnames[i]))
+
+            target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+
+
+            target_enc = encfinder(target)
+            base_enc = encfinder(base)
+
+            target_dic = analyzer(target, target_enc)
+            base_dic = analyzer(base, base_enc)
+
+            result = mismatch_finder(base_dic, target_dic)
+            with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
+                fileout.write(result)
+
+
+        elif option == 2:
+            base = 'ENGLISH_FIXT'
+            if not os.path.isdir(base):
+                input("\n%s folder missing. Aborting..." % base)
+                exit()
+
+            dirnames = listdirs(excluded = [base])
+            for i in range(len(dirnames)):
+                print("%i) %s" % (i, dirnames[i]))
+
+            target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+
+
+            target_enc = encfinder(target)
+            base_enc = encfinder(base)
+
+            target_dic = analyzer(target, target_enc)
+            base_dic = analyzer(base, base_enc)
+
+            result = mismatch_finder_global(base_dic, target_dic)
+            with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
+                fileout.write(result)
+
+        elif option == 3:
+
+            dirnames = listdirs()
+            for i in range(len(dirnames)):
+                print("%i) %s" % (i, dirnames[i]))
+            target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+
+            target_enc = encfinder(target)
+            target_dic = analyzer(target, target_enc)
+
+            result = similarity_finder(target_dic)
+            with open('sf_result.txt', 'w', encoding = target_enc) as fileout:
+                fileout.write(result)
+    else:
+        par = ArgumentParser()
+        par.add_argument("base", help="Base localization folder")
+        par.add_argument("target", help="Target localization folder")
+        par.add_argument("-n", "--normal", action="store_false", help="Normal mode")
+        par.add_argument("-g", "--global", action="store_false", help="Global mode")
+        par.add_argument("-c", "--clearcache", action="store_false", help="Clears json cache files")
+
+
+        args = par.parse_args()
+
+        if not os.path.isdir(args.base):
+            input("\n%s folder missing. Aborting..." % args.base)
             exit()
 
-        dirnames = listdirs(excluded = [base])
-        for i in range(len(dirnames)):
-            print("%i) %s" % (i, dirnames[i]))
+        target_enc = encfinder(args.target)
+        base_enc = encfinder(args.base)
 
-        target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+        target_dic = analyzer(args.target, target_enc)
+        base_dic = analyzer(args.base, base_enc)
 
+        if args.normal:
+            result = mismatch_finder(args.base, target_dic)
+            with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
+                fileout.write(result)
 
-        target_enc = encfinder(target)
-        base_enc = encfinder(base)
-
-        target_dic = analyzer(target, target_enc)
-        base_dic = analyzer(base, base_enc)
-
-        result = mismatch_finder(base_dic, target_dic)
-        with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
-            fileout.write(result)
-
-
-    elif option == 2:
-        base = 'ENGLISH_FIXT'
-        if not os.path.isdir(base):
-            input("\n%s folder missing. Aborting..." % base)
-            exit()
-
-        dirnames = listdirs(excluded = [base])
-        for i in range(len(dirnames)):
-            print("%i) %s" % (i, dirnames[i]))
-
-        target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
-
-
-        target_enc = encfinder(target)
-        base_enc = encfinder(base)
-
-        target_dic = analyzer(target, target_enc)
-        base_dic = analyzer(base, base_enc)
-
-        result = mismatch_finder_global(base_dic, target_dic)
-        with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
-            fileout.write(result)
-
-    elif option == 3:
-
-        dirnames = listdirs()
-        for i in range(len(dirnames)):
-            print("%i) %s" % (i, dirnames[i]))
-        target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
-
-        target_enc = encfinder(target)
-        target_dic = analyzer(target, target_enc)
-
-        result = similarity_finder(target_dic)
-        with open('sf_result.txt', 'w', encoding = target_enc) as fileout:
-            fileout.write(result)
+        if args.global:
+            result = mismatch_finder_global(args.base, target_dic)
+            with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
+                fileout.write(result)
