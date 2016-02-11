@@ -97,7 +97,7 @@ def mismatch_finder_global(base, target):
     fname_pattern = re.compile(r'[0-9]{3,5}')
     index_pattern = re.compile(r'.*\.MSG', re.I)
     print("\nTotal pairs: %s\n" % count_total)
-    
+
     for address1, address2 in itertools.combinations(target_alt, 2):
         if base_alt.get(address1) == base_alt.get(address2):
             if target_alt.get(address1) != target_alt.get(address2):

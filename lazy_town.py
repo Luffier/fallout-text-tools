@@ -1,4 +1,4 @@
-import os, re, shutil
+import os, re, ujson, shutil
 
 try:
     import Levenshtein
@@ -13,29 +13,34 @@ from common import *
 
 #makes a dictionary with the content of .msg files found in a given directory
 #dictionary structure: {'filename':{'index':'line content'}}
-def analyzer(directory, enc = None):
+def analyzer(directory, enc = None, clearCache = False):
 
-    data = {}
+    if not os.path.isfile('%s.json' % directory) or clearCache:
+        data = {}
+        thefiles = pathfinder(target = os.path.join('.', directory))
 
-    thefiles = pathfinder(target = os.path.join('.', directory))
+        for afile in thefiles:
+            filename = os.path.split(afile)[-1]
+            data[filename] = {}
 
-    for afile in thefiles:
-        filename = os.path.split(afile)[-1]
-        data[filename] = {}
+            par = [enc, None] #parameters = [enconding, errors]
+            lines = alt_read(afile, par)
 
-        par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_read(afile, par)
+            for line in lines:
+                if line.startswith('{'):
+                    content = re.findall(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
+                    try:
+                        index = content[0][0]
+                        data[filename][index] = content[0][2]
+                    except IndexError:
+                        input("There are syntax errors in %s:\n\nLine content: '%s'\n\nAborting..." % (afile, line))
+                        exit()
 
-        for line in lines:
-            if line.startswith('{'):
-                content = re.findall(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
-                try:
-                    index = content[0][0]
-                    data[filename][index] = content[0][2]
-                except IndexError:
-                    input("There are syntax errors in %s:\n\nLine content: '%s'\n\nAborting..." % (afile, line))
-                    exit()
-
+        with open('%s.json' % directory, 'w') as cacheOut:
+            ujson.dump(data, cacheOut)
+    else:
+        with open('%s.json' % directory, 'r') as cacheIn:
+            data = ujson.load(cacheIn)
     return data
 
 
