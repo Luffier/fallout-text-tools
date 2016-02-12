@@ -1,54 +1,11 @@
-import os, re, sys, argparse, shutil, itertools
+import os, re, sys, argparse, itertools
 from math import factorial
-
-
-try:
-    import Levenshtein
-    isLevenshtein = True
-except ImportError:
-    import difflib
-    isLevenshtein = False
-
 from common import *
 from lazy_town import analyzer
 
 
-#logs similar lines in a loc_dict (analyzer); not very usuful as of now
-def similarity_finder(loc_dict, threshold = (1, 0.9)):
-
-    above_threshold = 0
-    below_threshold = 0
-
-    output_text = ''
-
-    if isLevenshtein:
-        ratio = lambda x, y: Levenshtein.ratio(x, y)
-    else:
-        ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
-
-    flag = False
-    count = 0
-    count_total = len(loc_dict.keys())
-    for afile in loc_dict.keys():
-        for index1, index2 in itertools.combinations(loc_dict[afile], 2):
-            if threshold[0] > ratio( loc_dict[afile].get(index1), loc_dict[afile].get(index2) ) >= threshold[1]:
-                if not flag: output_text += "\n\n%s\n\n" % afile
-                flag = True
-                above_threshold += 1
-                output_text += "    %s --> %s\n    %s --> %s" % (index1, loc_dict[afile].get(index1), index2, loc_dict[afile].get(index2))
-            else:
-                below_threshold += 1
-        flag = False
-        count += 1
-        sys.stdout.write("\r%s/%s" % (count, count_total))
-        sys.stdout.flush()
-    print("\n\nThere were %i lines above the threshold and %i below." % (above_threshold, below_threshold))
-    return output_text
-
-
 #checks when two lines that are the same in the base language aren't in the
-#target, helpfull for spoting inaccuracies and mantain a consistent localization
-#this is done in a file basis
+#target, this is done in a file basis
 def mismatch_finder(base, target):
 
     output_text = ''
@@ -63,8 +20,8 @@ def mismatch_finder(base, target):
                     if not flag:
                         output_text += "\n\n%s{\n" % afile
                     flag = True
-                    output_text += "\n %7s --> '%s'" % (index1, target[afile].get(index1))
-                    output_text += "\n %7s --> '%s'" % (index2, target[afile].get(index2))
+                    output_text+= "\n%8s --> '%s'" % (index1, target[afile].get(index1))
+                    output_text += "\n%8s --> '%s'" % (index2, target[afile].get(index2))
                     output_text += "\n      EN --> '%s'\n" % (base[afile].get(index1))
         if flag:
             output_text += "\n}"
@@ -118,99 +75,31 @@ def mismatch_finder_global(base, target):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) == 1:
-
-        option = int(input("'ENGLISH_FIXT' as base.\nmismatch_finder (1), mismatch_finder_global (2) or similarity_finder (3)?: "))
-
-        if option == 1:
-            base = 'ENGLISH_FIXT'
-            if not os.path.isdir(base):
-                input("\n%s folder missing. Aborting..." % base)
-                exit()
-
-            dirnames = listdirs(excluded = [base])
-            for i in range(len(dirnames)):
-                print("%i) %s" % (i, dirnames[i]))
-
-            target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
+    par = argparse.ArgumentParser(description="For checking when two lines \
+    that are the same in the English files aren't in the target language, \
+    helpfull for spoting inaccuracies and mantain a consistent localization. \
+    Normal mode does this in a file basis, global compares every line with \
+    the rest across all files (very slow).")
+    par.add_argument("base", help="Base localization folder (ENGLISH)")
+    par.add_argument("target", help="Target localization folder")
+    par.add_argument("-n", "--normalmode", action="store_true", help="Normal mode")
+    par.add_argument("-g", "--globalmode", action="store_true", help="Global mode")
+    par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
+    args = par.parse_args()
 
 
-            target_enc = encfinder(target)
-            base_enc = encfinder(base)
+    target_enc = encfinder(args.target)
+    base_enc = encfinder(args.base)
 
-            target_dic = analyzer(target, target_enc)
-            base_dic = analyzer(base, base_enc)
+    target_dict = analyzer(args.target, target_enc, args.clearcache)
+    base_dict = analyzer(args.base, base_enc, args.clearcache)
 
-            result = mismatch_finder(base_dic, target_dic)
-            with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
-                fileout.write(result)
+    if args.normalmode:
+        result = mismatch_finder(base_dict, target_dict)
+        with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
+            fileout.write(result)
 
-
-        elif option == 2:
-            base = 'ENGLISH_FIXT'
-            if not os.path.isdir(base):
-                input("\n%s folder missing. Aborting..." % base)
-                exit()
-
-            dirnames = listdirs(excluded = [base])
-            for i in range(len(dirnames)):
-                print("%i) %s" % (i, dirnames[i]))
-
-            target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
-
-
-            target_enc = encfinder(target)
-            base_enc = encfinder(base)
-
-            target_dic = analyzer(target, target_enc)
-            base_dic = analyzer(base, base_enc)
-
-            result = mismatch_finder_global(base_dic, target_dic)
-            with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
-                fileout.write(result)
-
-        elif option == 3:
-
-            dirnames = listdirs()
-            for i in range(len(dirnames)):
-                print("%i) %s" % (i, dirnames[i]))
-            target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
-
-            target_enc = encfinder(target)
-            target_dic = analyzer(target, target_enc)
-
-            result = similarity_finder(target_dic)
-            with open('sf_result.txt', 'w', encoding = target_enc) as fileout:
-                fileout.write(result)
-
-
-    else:
-        par = argparse.ArgumentParser()
-        par.add_argument("base", help="Base localization folder")
-        par.add_argument("target", help="Target localization folder")
-        par.add_argument("-n", "--normalmode", action="store_true", help="Normal mode")
-        par.add_argument("-g", "--globalmode", action="store_true", help="Global mode")
-        par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
-
-
-        args = par.parse_args()
-        print(args.globalmode,args.normalmode)
-        if not os.path.isdir(args.base):
-            input("\n%s folder missing. Aborting..." % args.base)
-            exit()
-
-        target_enc = encfinder(args.target)
-        base_enc = encfinder(args.base)
-
-        target_dic = analyzer(args.target, target_enc)
-        base_dic = analyzer(args.base, base_enc)
-
-        if args.normalmode:
-            result = mismatch_finder(base_dic, target_dic)
-            with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
-                fileout.write(result)
-
-        if args.globalmode:
-            result = mismatch_finder_global(base_dic, target_dic)
-            with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
-                fileout.write(result)
+    if args.globalmode:
+        result = mismatch_finder_global(base_dict, target_dict)
+        with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
+            fileout.write(result)

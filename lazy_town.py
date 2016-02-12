@@ -1,4 +1,4 @@
-import os, re, ujson, shutil
+import os, re, ujson, shutil, argparse
 
 try:
     import Levenshtein
@@ -13,9 +13,9 @@ from common import *
 
 #makes a dictionary with the content of .msg files found in a given directory
 #dictionary structure: {'filename':{'index':'line content'}}
-def analyzer(directory, enc = None, clearCache = False):
+def analyzer(directory, enc = None, clearcache = False):
 
-    if not os.path.isfile('%s.json' % directory) or clearCache:
+    if not os.path.isfile('%s.json' % directory) or clearcache:
         data = {}
         thefiles = pathfinder(target = os.path.join('.', directory))
 
@@ -33,7 +33,9 @@ def analyzer(directory, enc = None, clearCache = False):
                         index = content[0][0]
                         data[filename][index] = content[0][2]
                     except IndexError:
-                        input("There are syntax errors in %s:\n\nLine content: '%s'\n\nAborting..." % (afile, line))
+                        print("There are syntax errors in %s:\n\n" % afile)
+                        print("Line content: '%s'\n\n" % line)
+                        input("Aborting...")
                         exit()
 
         with open('%s.json' % directory, 'w') as cacheOut:
@@ -54,6 +56,8 @@ def comparator(base, newbase, target, threshold = 0.9):
     above_threshold = 0
     below_threshold = 0
     not_found = 0
+    missing_files = 0
+    log = ""
 
     if isLevenshtein:
         ratio = lambda x, y: Levenshtein.ratio(x, y)
@@ -64,19 +68,33 @@ def comparator(base, newbase, target, threshold = 0.9):
 
     for afile in base.keys(): #for every filename in base (original english files)
         if newbase.get(afile): #only if it exists in newbase (Fixt's english files)
-            for index in base[afile].keys(): #for every index in filename
-                if newbase[afile].get(index): #only if it exists in Fixt's file
-                    #if the difference ratio between the two strings is above the threshold
-                    if ratio( base[afile].get(index), newbase[afile].get(index) ) >= threshold:
-                        if target[afile].get(index): #and the translation wasn't complete (?)
-                            newtarget[afile][index] = target[afile][index] #the old content is copied
-                            above_threshold += 1
+            if target.get(afile): #and only if it exists in target
+                for index in base[afile].keys(): #for every index in filename
+                    if newbase[afile].get(index): #only if line exists in Fixt's file
+                        #if the difference ratio between the two strings is above the threshold
+                        if ratio(base[afile].get(index), newbase[afile].get(index)) >= threshold:
+                            if target[afile].get(index): #and the translation wasn't complete (?)
+                                newtarget[afile][index] = target[afile][index] #the old content is copied
+                                above_threshold += 1
+                            else:
+                                log += "Content not found in target (%s %s)\n" % (afile, index)
+                                not_found += 1
                         else:
-                            print("Content not found in target (%s %s)" % (afile, index))
-                            not_found += 1
-                    else:
-                        below_threshold += 1
-    print("There were %i lines above the threshold, %i below and %i were missing." % (above_threshold, below_threshold, not_found))
+                            below_threshold += 1
+            else:
+                log += "Missing file in target folder (%s)\n" % afile
+                missing_files += 1
+        else:
+            log += "Missing file in Fixt folder (%s)\n" % afile
+            missing_files += 1
+
+    print("There were %i lines above the threshold" % above_threshold)
+    print("There were %i lines below the threshold" % below_threshold)
+    print("There are %i lines missing." % not_found)
+    print("There are %i files missing" % missing_files)
+
+    with open('lt-log.txt', 'w') as logfile:
+        logfile.write(log)
 
     return newtarget
 
@@ -122,64 +140,55 @@ def injector(loc_dict, directory, enc = None):
 
             except UnicodeEncodeError:
                 err = 'ignore'
-                print(afile + "\n ---> Decoding error (using %s) (ignoring for now; information will be lost)\n" % target_enc)
+                print(afile + "\n ---> Decoding error (using %s; information will be lost)\n" % target_enc)
 
             fileout.close()
 
 
 if __name__ == '__main__':
 
-    start_msg = "Using ENGLISH_BASE and ENGLISH_FIXT\n\
-[y]es and hit enter to proceed or anything else to quit: "
-
-    no_files_msg = "There are no .msg files"
-
+    par = argparse.ArgumentParser(description="Makes the target localization \
+    files compatible with the latest Fixt update, the result will be a \
+    mixture of English and the target language. Levenshtein algorithm is used \
+    (if you don't have python-Levenshtein, difflib will be used, and its \
+    results tend to be very different), you can change the lower similarity \
+    ratio threshold. Creates a log of lines above and below the threshold and \
+    files and lines missing.")
+    par.add_argument("base", default="ENGLISH_BASE",
+                     help="English files used during the localization process (folder name)")
+    par.add_argument("newbase", default="ENGLISH_NEW", help="Current English files (folder name)")
+    par.add_argument("target", help="Target files (folder name)")
+    par.add_argument("-t", "--threshold", type=float, default=0.9, help="Lower similarity ratio threshold")
+    par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
+    args = par.parse_args()
 
     thefiles = pathfinder(excluded = ['__pycache__'])
+    if not thefiles:
+        input("There are no .msg files.")
+        exit()
 
-    if thefiles:
-        inputcheck = input(start_msg).lower()
-        if inputcheck in ('yes','y'):
-            pass
-        else:
+    for folder in (args.base, args.newbase):
+        if not os.path.isdir(folder):
+            input("\n%s folder missing. Aborting..." % folder)
             exit()
-    else:
-        print(no_files_msg)
-        input()
-        exit()
 
+    target_new = args.target + '_NEW'
+    if os.path.isdir(target_new):
+        shutil.rmtree(target_new)
 
-    base = 'ENGLISH_BASE'
-    base_new = 'ENGLISH_FIXT'
-    if not os.path.isdir(base):
-        input("\n%s folder missing. Aborting..." % base)
-        exit()
-    if not os.path.isdir(base_new):
-        input("\n%s folder missing. Aborting..." % base_new)
-        exit()
-
-    dirnames = listdirs(excluded = [base, base_new])
-    for i in range(len(dirnames)):
-        print("%i) %s" % (i, dirnames[i]))
-
-    target = dirnames[int(input("\nType the number of the language/folder to work with: "))]
-
-    target_new = target + '_NEW'
-    if os.path.isdir(target_new): shutil.rmtree(target_new)
-
-    base_enc = encfinder(base)
-    target_enc = encfinder(target)
+    base_enc = encfinder(args.base)
+    target_enc = encfinder(args.target)
     output_path = os.path.join('.', target_new)
 
     print("\n\nWORKING...\n\n")
 
-    base_dic = analyzer(base, base_enc)
-    base_new_dic = analyzer(base_new, base_enc)
-    target_dic = analyzer(target, target_enc)
+    base_dict = analyzer(args.base, base_enc, args.clearcache)
+    new_base_dict = analyzer(args.newbase, base_enc, args.clearcache)
+    target_dict = analyzer(args.target, target_enc, args.clearcache)
 
-    target_new_dic = comparator(base_dic, base_new_dic, target_dic)
+    target_new_dict = comparator(base_dict, new_base_dict, target_dict, args.threshold)
 
-    shutil.copytree(base_new, output_path)
-    injector(target_new_dic, output_path, base_enc)
+    shutil.copytree(args.newbase, output_path)
+    injector(target_new_dict, output_path, base_enc)
 
     input("\n\nALL DONE!\n\n")
