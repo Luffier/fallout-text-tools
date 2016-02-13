@@ -79,6 +79,7 @@ if __name__ == '__main__':
                       help="Recursive folder search; the target path should \
                       contain the localization folders you want to check")
     args = par.parse_args()
+
     path = os.path.abspath(args.target)
 
     if not args.recursive:
@@ -91,13 +92,13 @@ if __name__ == '__main__':
         thefiles = pathfinder(path, excluded = ['__pycache__'] + other_dirs)
         enc = encfinder(dirname)
 
-        print("+ Working with %s (%s)..." % (dirname, enc ))
+        print("\n+ Working with %s (%s)..." % (dirname, enc ))
         output = syntax_checker(thefiles, enc, fullmode=args.fullmode)
 
         if output:
             output = help_msg + output
             with open('sc-result-%s.txt' % dirname, 'w', encoding=enc) as foutput:
                 foutput.write(output)
-            print(" One or more syntax errors were found!")
+            print("  -> One or more syntax errors were found!")
         else:
-            print(" No syntax errors found!")
+            print("  -> No syntax errors found!")
