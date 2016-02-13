@@ -1,4 +1,4 @@
-import os, re, fnmatch, argparse
+import os, re, sys, fnmatch, argparse
 
 from common import *
 
@@ -71,28 +71,33 @@ if __name__ == '__main__':
     minimaze false positives. You'll have to fix any syntax error manually \
     using the output text as reference. There are two modes, normal and full. \
     Full mode adds the line number to any flag encountered, but unfortunately \
-    it also makes the script very slow.")
-    mode = par.add_mutually_exclusive_group()
+    it also makes the script very slow. If you want to check several folders \
+    one, you can use the recursive mode")
     par.add_argument("target", help="Target folder")
-    mode.add_argument("-f", "--fullmode", action="store_true", help="Full mode")
+    par.add_argument("-f", "--fullmode", action="store_true", help="Full mode")
+    par.add_argument("-r", "--recursive", action="store_true",
+                      help="Recursive folder search; the target path should \
+                      contain the localization folders you want to check")
     args = par.parse_args()
-
     path = os.path.abspath(args.target)
-    dirname = os.path.basename(path)
-    thefiles = pathfinder(path, excluded = ["__pycache__"])
 
-    if not thefiles:
-        sys.exit("There are no .msg files.")
-
-    enc = encfinder(dirname)
-
-    print("+ Working with %s (%s)..." % (dirname, enc))
-
-    output = syntax_checker(thefiles, enc, fullmode=args.fullmode)
-    if output:
-        output = help_msg + output
-        with open('sc-result-%s.txt' % dirname, 'w', encoding=enc) as foutput:
-            foutput.write(output)
-        print("There are syntax errors!")
+    if not args.recursive:
+        dirnames =[os.path.basename(path)]
     else:
-        print("No syntax errors found!")
+        dirnames = listdirs(path)
+
+    for dirname in dirnames:
+        other_dirs = [d for d in dirnames if d is not dirname]
+        thefiles = pathfinder(path, excluded = ['__pycache__'] + other_dirs)
+        enc = encfinder(dirname)
+
+        print("+ Working with %s (%s)..." % (dirname, enc ))
+        output = syntax_checker(thefiles, enc, fullmode=args.fullmode)
+
+        if output:
+            output = help_msg + output
+            with open('sc-result-%s.txt' % dirname, 'w', encoding=enc) as foutput:
+                foutput.write(output)
+            print(" One or more syntax errors were found!")
+        else:
+            print(" No syntax errors found!")
