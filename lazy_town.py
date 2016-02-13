@@ -35,8 +35,7 @@ def analyzer(directory, enc = None, clearcache = False):
                     except IndexError:
                         print("There are syntax errors in %s:\n\n" % afile)
                         print("Line content: '%s'\n\n" % line)
-                        input("Aborting...")
-                        exit()
+                        sys.exit("Aborting...")
 
         with open('%s.json' % directory, 'w') as cacheOut:
             ujson.dump(data, cacheOut)
@@ -161,7 +160,7 @@ if __name__ == '__main__':
     par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
     args = par.parse_args()
 
-    thefiles = pathfinder(excluded = ['__pycache__'])
+    thefiles = pathfinder()
     if not thefiles:
         sys.exit("There are no .msg files.")
 

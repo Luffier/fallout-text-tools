@@ -1,4 +1,4 @@
-import os, re, shutil
+import os, re, sys, shutil
 
 from common import *
 
@@ -106,10 +106,6 @@ Default settings:\n\
 \n\n\
 [y]es to proceed, [c]ustom to change the settings or anything else to quit: "
 
-    no_files_msg = "\n\n\
-There are no .msg files in this directory (the script makes a recursive search).\n\
-Hit enter to quit and try again.\n"
-
     exclusions_msg = "\n\
 What files do you want to exclude (case insensitive)?, press Enter for none Ex: 'f1.msg f2.msg':\n"
 
@@ -127,7 +123,7 @@ Do you want the output to include all files (even those without changes)? [y]es 
     if thefiles:
         inputcheck = input(start_msg).lower()
         if inputcheck not in ('yes','y','c','custom'):
-            exit()
+            sys.exit()
         if inputcheck in ('c','custom'):
             excluded_files = input(exclusions_msg).lower().split()
 
@@ -138,8 +134,7 @@ Do you want the output to include all files (even those without changes)? [y]es 
                 mode = False
 
     else:
-        input(no_files_msg)
-        exit()
+        sys.exit("There are no .msg files")
 
 
     print ("\n\nWORKING...\n\n")

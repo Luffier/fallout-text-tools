@@ -1,4 +1,4 @@
-import os, re
+import os, re, sys
 
 from common import *
 
@@ -43,7 +43,7 @@ def startcheck(message):
     if inputcheck in ('yes','y'):
         pass
     else:
-        exit()
+        sys.exit(1)
 
 
 def optionscheck(questions):
@@ -61,9 +61,7 @@ def optionscheck(questions):
 if thefiles:
     startcheck(start_msg)
 else:
-    print(no_files_msg)
-    input()
-    exit()
+    sys.exit(no_files_msg)
 
 comments, indices, names, header_footer, dic = optionscheck( [comments_msg, indices_msg, names_msg, hf_msg, dic_msg] )
 
@@ -144,9 +142,7 @@ for dirname in dirnames:
             output.write(result)
 
     except PermissionError:
-        print('\n\nERROR. merged_text.txt is open in another program. Close it and try again.\n\n')
-        input()
-        exit()
+        sys.exit('\n\nERROR. merged_text.txt is open in another program. Close it and try again.\n\n')
 
     if dic:
         try:
@@ -154,9 +150,7 @@ for dirname in dirnames:
                 dic_file.write(dic_result)
 
         except PermissionError:
-            print('\n\nERROR. merged_text.dic is open in another program. Close it and try again.\n\n')
-            input()
-            exit()
+            sys.exit('\n\nERROR. merged_text.dic is open in another program. Close it and try again.\n\n')
 
 
     print('\n\n%s done!' % dirname)

@@ -8,7 +8,7 @@ def startcheck(message):
     if inputcheck in ('yes','y'):
         pass
     else:
-        exit()
+        exit(1)
 
 
 def duplicate_checker(files, enc):
@@ -56,20 +56,18 @@ There are no .msg files in this directory (the script makes a recursive search).
 Hit enter to quit and try again.\n"
 
 
-    thefiles = pathfinder(excluded = ['__pycache__'])
+    thefiles = pathfinder()
     outputdir = 'output'
 
     if thefiles:
         startcheck(start_msg)
     else:
-        print(no_files_msg)
-        input()
-        exit()
+        sys.exit(no_files_msg)
 
 
     print ("\n\nWORKING...\n\n")
 
-    dirnames = listdirs(excluded = ['__pycache__'])
+    dirnames = listdirs()
 
     for dirname in dirnames:
         other_dirs = [d for d in dirnames if d is not dirname]
