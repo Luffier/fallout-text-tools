@@ -1,7 +1,7 @@
 import os, fnmatch
 
 
-#returns a list of the folder names in target minus excluded (list of folder names)
+#returns a list of the folder names in target minus excluded (list of folders)
 #excludes folders with no .msg files (recursive)
 def listdirs(target = '.', excluded = []):
     dirnames = [dirname for dirname in os.listdir(target) if os.path.isdir(dirname)]
@@ -88,5 +88,4 @@ def alt_read(filepath, parameters = [None, None]):
 
 if __name__ == '__main__':
 
-    input("Don't use this module")
-    exit()
+    sys.exit("Don't use this module")

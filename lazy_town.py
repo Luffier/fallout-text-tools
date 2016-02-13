@@ -152,8 +152,7 @@ if __name__ == '__main__':
     mixture of English and the target language. Levenshtein algorithm is used \
     (if you don't have python-Levenshtein, difflib will be used, and its \
     results tend to be very different), you can change the lower similarity \
-    ratio threshold. Creates a log of lines above and below the threshold and \
-    files and lines missing.")
+    ratio threshold. Creates a log of missing files and lines.")
     par.add_argument("base", default="ENGLISH_BASE",
                      help="English files used during the localization process (folder name)")
     par.add_argument("newbase", default="ENGLISH_NEW", help="Current English files (folder name)")
@@ -164,13 +163,11 @@ if __name__ == '__main__':
 
     thefiles = pathfinder(excluded = ['__pycache__'])
     if not thefiles:
-        input("There are no .msg files.")
-        exit()
+        sys.exit("There are no .msg files.")
 
     for folder in (args.base, args.newbase):
         if not os.path.isdir(folder):
-            input("\n%s folder missing. Aborting..." % folder)
-            exit()
+            sys.exit("\n%s folder missing. Aborting..." % folder)
 
     target_new = args.target + '_NEW'
     if os.path.isdir(target_new):
@@ -191,4 +188,5 @@ if __name__ == '__main__':
     shutil.copytree(args.newbase, output_path)
     injector(target_new_dict, output_path, base_enc)
 
-    input("\n\nALL DONE!\n\n")
+    print("\n\nALL DONE!\n\n")
+    sys.exit()
