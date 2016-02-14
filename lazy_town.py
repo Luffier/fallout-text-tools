@@ -1,4 +1,5 @@
 import os, re, ujson, shutil, argparse
+from common import *
 
 try:
     import Levenshtein
@@ -8,7 +9,13 @@ except ImportError:
     print("Levenshtein module not found, using difflib instead")
     isLevenshtein = False
 
-from common import *
+try:
+    import ujson
+    isUltra = True
+except ImportError:
+    import json
+    print("ujson module not found, using json instead")
+    isUltra = False
 
 
 #makes a dictionary with the content of .msg files found in a given directory
@@ -37,11 +44,14 @@ def analyzer(directory, enc = None, clearcache = False):
                         print("Line content: '%s'\n\n" % line)
                         sys.exit("Aborting...")
 
-        with open('%s.json' % directory, 'w') as cacheout:
-            ujson.dump(data, cacheOut)
+        with open('%s.json' % directory, 'w') as cacheOut:
+            if isUltra: ujson.dump(data, cacheOut)
+            else: json.dump(data, cacheOut)
+
     else:
-        with open('%s.json' % directory, 'r') as cachein:
-            data = ujson.load(cacheIn)
+        with open('%s.json' % directory, 'r') as cacheIn:
+            if isUltra: ujson.dump(data, cacheIn)
+            else: json.dump(data, cacheIn)
     return data
 
 

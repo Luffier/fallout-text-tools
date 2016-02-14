@@ -1,7 +1,6 @@
 import os, re, sys, argparse, itertools
 from math import factorial
 
-
 try:
     import Levenshtein
     isLevenshtein = True
