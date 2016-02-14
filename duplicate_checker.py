@@ -1,14 +1,6 @@
-import os, re
+import os, re, sys, argparse
 
 from common import *
-
-
-def startcheck(message):
-    inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'):
-        pass
-    else:
-        exit()
 
 
 def duplicate_checker(files, enc):
@@ -17,8 +9,8 @@ def duplicate_checker(files, enc):
 
     for afile in files:
 
-        par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_read(afile, par)
+        opt = [enc, None] #opt = [enconding, errors]
+        lines = alt_read(afile, opt)
 
         #remove dev comments and others
         lines = [line for line in lines if not line.startswith('#')]
@@ -33,58 +25,43 @@ def duplicate_checker(files, enc):
             result = result + afile
             matches.sort()
             while matches:
-                result = result + "\n       This file has the index number %s repeated %s times!" % ( str(matches[0]), str(matches.count(matches[0])) )
+                result = result + "\n       This file has the index number %s repeated %s times!" % (str(matches[0]), str(matches.count(matches[0])))
                 matches[:] = [match for match in matches if match != matches[0]]
             result = result + "\n\n"
 
     return result
 
 
-
-
 if __name__ == '__main__':
 
-    start_msg = "\n\
-This script checks Fallout's .msg files for duplicates in the index numbers.\n\
-The result will be saved into a text file called 'dc-result'. \n\
-The script doesn't take into account the index numbers inside dev comments.\n\
-\n\n\
-[y]es and hit enter to proceed or anything else to quit: "
+    par = argparse.ArgumentParser(description="Checks for duplicates in the \
+    index numbers (which means content being override and unused). The result \
+    will be saved into 'dc-result.txt'. The script doesn't take into account \
+    index numbers inside dev comments.")
+    par.add_argument("target", help="Target folder")
+    par.add_argument("-r", "--recursive", action="store_true",
+                      help="Recursive folder search; the target path should \
+                      contain the localization folders you want to check")
+    args = par.parse_args()
 
-    no_files_msg = "\n\
-There are no .msg files in this directory (the script makes a recursive search).\n\
-Hit enter to quit and try again.\n"
 
-
-    thefiles = pathfinder(excluded = ['__pycache__'])
-    outputdir = 'output'
-
-    if thefiles:
-        startcheck(start_msg)
+    path = os.path.abspath(args.target)
+    if not args.recursive:
+        dirnames = [os.path.basename(path)]
     else:
-        print(no_files_msg)
-        input()
-        exit()
-
-
-    print ("\n\nWORKING...\n\n")
-
-    dirnames = listdirs(excluded = ['__pycache__'])
+        dirnames = listdirs(path)
 
     for dirname in dirnames:
         other_dirs = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excluded = [outputdir] + other_dirs)
+        thefiles = pathfinder(path, excluded = ['__pycache__'] + other_dirs)
         enc = encfinder(dirname)
 
-        print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )
-
+        print("\n+ Working with %s (%s)..." % (dirname, enc))
         output = duplicate_checker(thefiles, enc)
 
         if output:
-            print("DONE! There are duplicate lines!")
             with open('dc-result-%s.txt' % dirname, 'w', encoding=enc) as foutput:
                 foutput.write(output)
-
-
+            print("  -> Duplicate lines were found!")
         else:
-            input("DONE! Congratulations, there are no duplicate lines!")
+            print("  -> No duplicate lines found!")

@@ -57,3 +57,4 @@ test.py
 *.msg
 *.txt
 *.sve
+*.json
