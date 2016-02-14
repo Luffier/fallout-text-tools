@@ -23,8 +23,8 @@ def analyzer(directory, enc = None, clearcache = False):
             filename = os.path.split(afile)[-1]
             data[filename] = {}
 
-            par = [enc, None] #parameters = [enconding, errors]
-            lines = alt_read(afile, par)
+            opt = [enc, None] #opt = [enconding, errors]
+            lines = alt_read(afile, opt)
 
             for line in lines:
                 if line.startswith('{'):
@@ -37,10 +37,10 @@ def analyzer(directory, enc = None, clearcache = False):
                         print("Line content: '%s'\n\n" % line)
                         sys.exit("Aborting...")
 
-        with open('%s.json' % directory, 'w') as cacheOut:
+        with open('%s.json' % directory, 'w') as cacheout:
             ujson.dump(data, cacheOut)
     else:
-        with open('%s.json' % directory, 'r') as cacheIn:
+        with open('%s.json' % directory, 'r') as cachein:
             data = ujson.load(cacheIn)
     return data
 
@@ -50,10 +50,10 @@ def analyzer(directory, enc = None, clearcache = False):
 #target => localization files
 #merges newbase and target by comparing base and newbase, if the two lines have
 #a similarity ratio higher than the threshold value, the target content is used
-def comparator(base, newbase, target, threshold = 0.9):
+def comparator(base, newbase, target, thd = 0.9):
 
-    above_threshold = 0
-    below_threshold = 0
+    above_thd = 0
+    below_thd = 0
     not_found = 0
     missing_files = 0
     log = ""
@@ -70,16 +70,17 @@ def comparator(base, newbase, target, threshold = 0.9):
             if target.get(afile): #and only if it exists in target
                 for index in base[afile].keys(): #for every index in filename
                     if newbase[afile].get(index): #only if line exists in Fixt's file
-                        #if the difference ratio between the two strings is above the threshold
-                        if ratio(base[afile].get(index), newbase[afile].get(index)) >= threshold:
-                            if target[afile].get(index): #and the translation wasn't complete (?)
-                                newtarget[afile][index] = target[afile][index] #the old content is copied
-                                above_threshold += 1
+                        #if the difference ratio between the 2 strings is above the thd
+                        if ratio(base[afile].get(index), newbase[afile].get(index)) >= thd:
+                            if target[afile].get(index): #and the loc wasn't complete (?)
+                                #the old content is copied
+                                newtarget[afile][index] = target[afile][index]
+                                above_thd += 1
                             else:
                                 log += "Content not found in target (%s %s)\n" % (afile, index)
                                 not_found += 1
                         else:
-                            below_threshold += 1
+                            below_thd += 1
             else:
                 log += "Missing file in target folder (%s)\n" % afile
                 missing_files += 1
@@ -87,8 +88,8 @@ def comparator(base, newbase, target, threshold = 0.9):
             log += "Missing file in Fixt folder (%s)\n" % afile
             missing_files += 1
 
-    print("There were %i lines above the threshold" % above_threshold)
-    print("There were %i lines below the threshold" % below_threshold)
+    print("There were %i lines above the threshold" % above_thd)
+    print("There were %i lines below the threshold" % below_thd)
     print("There are %i lines missing." % not_found)
     print("There are %i files missing" % missing_files)
 
@@ -99,7 +100,7 @@ def comparator(base, newbase, target, threshold = 0.9):
 
 
 #copies the dictionary's content into the .msg files inside directory
-def injector(loc_dict, directory, enc = None):
+def injector(loc, directory, enc = None):
 
     thefiles = pathfinder(target = os.path.join('.', directory))
     target_enc = encfinder(directory)
@@ -110,17 +111,17 @@ def injector(loc_dict, directory, enc = None):
 
         filename = os.path.split(afile)[-1]
 
-        par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_read(afile, par)
+        opt = [enc, None] #opt = [enconding, errors]
+        lines = alt_read(afile, opt)
 
         for line in lines:
 
             if line.startswith('{'):
                 content = re.search(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
                 index = content.group(1)
-                if index in loc_dict[filename]:
+                if index in loc[filename]:
                     if content.group(3):
-                        line = line[:content.start(3)] + loc_dict[filename][index] + line[content.end(3):]
+                        line = line[:content.start(3)] + loc[filename][index] + line[content.end(3):]
                 fileout_text = fileout_text + line
 
             elif line == '\n':

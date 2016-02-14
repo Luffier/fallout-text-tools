@@ -9,8 +9,8 @@ def duplicate_checker(files, enc):
 
     for afile in files:
 
-        par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_read(afile, par)
+        opt = [enc, None] #opt = [enconding, errors]
+        lines = alt_read(afile, opt)
 
         #remove dev comments and others
         lines = [line for line in lines if not line.startswith('#')]
@@ -25,7 +25,7 @@ def duplicate_checker(files, enc):
             result = result + afile
             matches.sort()
             while matches:
-                result = result + "\n       This file has the index number %s repeated %s times!" % ( str(matches[0]), str(matches.count(matches[0])) )
+                result = result + "\n       This file has the index number %s repeated %s times!" % (str(matches[0]), str(matches.count(matches[0])))
                 matches[:] = [match for match in matches if match != matches[0]]
             result = result + "\n\n"
 
@@ -47,16 +47,16 @@ if __name__ == '__main__':
 
     path = os.path.abspath(args.target)
     if not args.recursive:
-        dirnames =[os.path.basename(path)]
+        dirnames = [os.path.basename(path)]
     else:
         dirnames = listdirs(path)
 
     for dirname in dirnames:
         other_dirs = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excluded = ['__pycache__'] + other_dirs)
+        thefiles = pathfinder(path, excluded = ['__pycache__'] + other_dirs)
         enc = encfinder(dirname)
 
-        print( "\n+ Working with %s (%s)..." % (dirname, enc ) )
+        print("\n+ Working with %s (%s)..." % (dirname, enc))
         output = duplicate_checker(thefiles, enc)
 
         if output:

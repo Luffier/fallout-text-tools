@@ -50,7 +50,7 @@ def mismatch_finder_global(base, target):
             base_alt[afile+index] = base[afile][index]
 
     flag = False
-    count_total = factorial( len(base_alt.keys()) ) // (2 *  factorial( len(base_alt.keys()) - 2))
+    count_total = factorial(len(base_alt.keys())) // (2 *  factorial(len(base_alt.keys()) - 2))
     fname_pattern = re.compile(r'[0-9]{3,5}')
     index_pattern = re.compile(r'.*\.MSG', re.I)
     print("\nTotal pairs: %s\n" % count_total)
@@ -96,10 +96,10 @@ if __name__ == '__main__':
 
     if args.normalmode:
         result = mismatch_finder(base_dict, target_dict)
-        with open('mf_result.txt', 'w', encoding = target_enc) as fileout:
+        with open('mf_result.txt', 'w', encoding = target_enc) as foutput:
             fileout.write(result)
 
     if args.globalmode:
         result = mismatch_finder_global(base_dict, target_dict)
-        with open('mfG_result.txt', 'w', encoding = target_enc) as fileout:
+        with open('mfG_result.txt', 'w', encoding = target_enc) as foutput:
             fileout.write(result)

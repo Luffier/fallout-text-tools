@@ -13,8 +13,8 @@ def syntax_checker(files, enc, fullmode=False):
     for afile in files:
         flag = False
 
-        par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_read(afile, par)
+        opt = [enc, None] #opt = [enconding, errors]
+        lines = alt_read(afile, opt)
 
         if fullmode: reference = lines
 
@@ -55,13 +55,14 @@ def syntax_checker(files, enc, fullmode=False):
 
 if __name__ == '__main__':
 
-
-    help_msg = (146*"*" + "\n Less tran 3 pairs of brackets: line break inside "
-    "brackets (false positive), dev comment without number sign (ugly) or missing "
-    "bracket/s (crash!)\n More than 3 pairs of brackets: inline dev comment with "
-    "brackets inside, 2 lines in one (not fatal but ugly) or a 'lost' set of "
-    "brackets (crash!)\n Non-numeric character on index setion: possibly a typo or "
-    "a weird bracket configuration (crash!)\n" + 146*"*" + "\n\n\n")
+    help_msg = (146*"*" +
+    "\n Less tran 3 pairs of brackets: line break inside " +
+    "brackets (false positive), dev comment without number sign (ugly) or " +
+    "missing bracket/s (crash!)\n More than 3 pairs of brackets: inline dev " +
+    "comment with brackets inside, 2 lines in one (not fatal but ugly) or a " +
+    "'lost' set of brackets (crash!)\n Non-numeric character on index " +
+    "setion: possibly a typo or a weird bracket configuration (crash!)\n" +
+    146*"*" + "\n\n\n")
 
     par = argparse.ArgumentParser(description="Checks the syntax (open curly \
     brackets and non numeric characters on the index position) and saves a \
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     path = os.path.abspath(args.target)
 
     if not args.recursive:
-        dirnames =[os.path.basename(path)]
+        dirnames = [os.path.basename(path)]
     else:
         dirnames = listdirs(path)
 
@@ -92,7 +93,7 @@ if __name__ == '__main__':
         thefiles = pathfinder(path, excluded = ['__pycache__'] + other_dirs)
         enc = encfinder(dirname)
 
-        print("\n+ Working with %s (%s)..." % (dirname, enc ))
+        print("\n+ Working with %s (%s)..." % (dirname, enc))
         output = syntax_checker(thefiles, enc, fullmode=args.fullmode)
 
         if output:

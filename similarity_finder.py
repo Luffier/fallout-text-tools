@@ -13,13 +13,13 @@ from common import *
 from lazy_town import analyzer
 
 
-#logs similar lines within a loc_dict (analyzer); not very usuful as of now
-def similarity_finder(loc_dict, threshold = (1, 0.9)):
+#logs similar lines within a loc dict (analyzer); not very usuful as of now
+def similarity_finder(loc, thd = (1, 0.9)):
 
-    above_threshold = 0
-    below_threshold = 0
+    above_thd = 0
+    below_thd = 0
 
-    output_text = ''
+    output = ''
 
     if isLevenshtein:
         ratio = lambda x, y: Levenshtein.ratio(x, y)
@@ -28,22 +28,23 @@ def similarity_finder(loc_dict, threshold = (1, 0.9)):
 
     flag = False
     count = 0
-    count_total = len(loc_dict.keys())
-    for afile in loc_dict.keys():
-        for index1, index2 in itertools.combinations(loc_dict[afile], 2):
-            if threshold[0] > ratio( loc_dict[afile].get(index1), loc_dict[afile].get(index2) ) >= threshold[1]:
-                if not flag: output_text += "\n\n%s\n\n" % afile
+    count_total = len(loc.keys())
+    for afile in loc.keys():
+        for index1, index2 in itertools.combinations(loc[afile], 2):
+            if thd[0] > ratio(loc[afile].get(index1), loc[afile].get(index2)) >= thd[1]:
+                if not flag: output += "\n\n%s\n\n" % afile
                 flag = True
-                above_threshold += 1
-                output_text += "    %s --> %s\n    %s --> %s" % (index1, loc_dict[afile].get(index1), index2, loc_dict[afile].get(index2))
+                above_thd += 1
+                output += "    %s --> %s\n    %s --> %s" % (index1, loc[afile].get(index1),
+                                                            index2, loc[afile].get(index2))
             else:
-                below_threshold += 1
+                below_thd += 1
         flag = False
         count += 1
         sys.stdout.write("\r%s/%s" % (count, count_total))
         sys.stdout.flush()
-    print("\n\nThere were %i lines above the threshold and %i below." % (above_threshold, below_threshold))
-    return output_text
+    print("\n\nThere were %i lines above the threshold and %i below." % (above_thd, below_thd))
+    return output
 
 
 if __name__ == '__main__':
@@ -59,5 +60,5 @@ if __name__ == '__main__':
         target_dic = analyzer(args.target, target_enc)
 
         result = similarity_finder(target_dic)
-        with open('sf_result.txt', 'w', encoding = target_enc) as fileout:
+        with open('sf_result.txt', 'w', encoding = target_enc) as foutput:
             fileout.write(result)
