@@ -3,33 +3,35 @@ import os, re, sys, shutil, argparse
 from common import *
 
 
-#if fullmode is False it will write only files with changes
-def linebreak_remover(target, enc = None, excluded = [], fullmode = False, ecmode = False):
+#if fmode is False it will write only files with changes
+def linebreak_remover(target, enc = None, excluded = [],
+                      fullmode = False, ecmode = False):
 
-    files_changed = 0
-    deleted_spaces = 0
-    deleted_linebreaks = 0
+    nfiles = 0
+    nspaces = 0
+    nlinebreaks = 0
     isBetweenBrackets = False
 
     thefiles = pathfinder(target, excluded = ["lb-output", '__pycache__'])
+    outpath = ".\\lb-output\\" + os.path.basename(target)
+    if os.path.isdir(outpath): shutil.rmtree(outpath)
 
     for afile in thefiles:
-        foutput_path = os.path.join("lb-output", afile)
+        filepath = afile.replace(os.path.commonpath((target,afile)),"")
+        foutpath = outpath + filepath
+
         filename = os.path.split(afile)[-1]
-
         if filename.lower() in excluded:
-
             if fullmode:
-                shutil.copy(afile, foutput_path)
+                shutil.copy(afile, foutpath)
             continue
 
         else:
-            par = [enc, None] #parameters = [enconding, errors]
-            lines = alt_read(afile, par)
+            opt = [enc, None] #opt = [enconding, errors]
+            lines = alt_read(afile, opt)
 
             filein_reference = ''.join(lines)
             fileout_text = ''
-
             for line in lines:
 
                 if ecmode:
@@ -83,13 +85,20 @@ def linebreak_remover(target, enc = None, excluded = [], fullmode = False, ecmod
 
             if fileout_text != filein_reference:
                 files_changed = files_changed + 1
-                with open(foutput_path, 'w', encoding=enc) as fileout:
-                    fileout.write(fileout_text)
+                while True:
+                    try:
+                        with open(foutpath, 'w', encoding=enc) as fileout:
+                            fileout.write(fileout_text)
+                    except FileNotFoundError:
+                        os.makedirs(os.path.dirname(foutpath), exist_ok=True)
+                        continue
+                    break
 
             elif fullmode:
-               shutil.copy(afile, foutput_path)
+               shutil.copy(afile, foutpath)
 
-    return (len(thefiles), len(excluded), files_changed, deleted_linebreaks, deleted_spaces)
+
+    return (len(thefiles), len(excluded), nfiles, nlinebreaks, nspaces)
 
 
 if __name__ == '__main__':
@@ -117,9 +126,6 @@ if __name__ == '__main__':
                      and separate with spaces)")
     args = par.parse_args()
 
-    thefiles = pathfinder(excluded = ["lb-output", '__pycache__'])
-    treecreator(thefiles, "lb-output")
-
     path = os.path.abspath(args.target)
     if not args.recursive:
         dirnames = [os.path.basename(path)]
@@ -127,15 +133,19 @@ if __name__ == '__main__':
         dirnames = listdirs(path, excluded = ["lb-output", '__pycache__'])
 
     for dirname in dirnames:
-        other_dirs = [d for d in dirnames if d is not dirname]
+
+        if args.recursive:
+            dirpath = os.path.join(path, dirname)
+        else:
+            dirpath = path
+
         enc = encfinder(dirname)
+        print("\n+ Working with %s (%s)..." % (dirname, enc))
+        results = linebreak_remover(dirpath, enc, args.excluded,
+                                    args.fullmode, args.ecmode)
 
-        print( "\n+ Working with %s (%s)..." % (dirname, enc ) )
-
-        results = linebreak_remover(dirname, enc, args.excluded, args.fullmode, args.ecmode)
-
-        print( " - Number of files: %i (%i excluded)" % (results[0], results[1]) )
-        print( " - Number of files changed: %i" % results[2] )
-        print( " - Line breaks toll: %i" % results[3] )
-        print( " - Unnecessary spaces toll: %i" % results[4] )
-        print( "   %s completed!\n" % dirname )
+        print(" - Number of files: %i (%i excluded)" % (results[0],results[1]))
+        print(" - Number of files changed: %i" % results[2])
+        print(" - Line breaks toll: %i" % results[3])
+        print(" - Unnecessary spaces toll: %i" % results[4])
+        print("   %s completed!\n" % dirname)
