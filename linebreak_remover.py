@@ -1,26 +1,26 @@
-import os, re, sys, shutil
+import os, re, sys, shutil, argparse
 
 from common import *
 
 
-#if allmode is False it will write only files with changes
-def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = False, clsmode = False):
+#if fullmode is False it will write only files with changes
+def linebreak_remover(target, enc = None, excluded = [], fullmode = False, ecmode = False):
 
     files_changed = 0
     deleted_spaces = 0
     deleted_linebreaks = 0
     isBetweenBrackets = False
 
+    thefiles = pathfinder(target, excluded = ["lb-output", '__pycache__'])
 
-    for afile in files:
-
-        fileout_path = os.path.join('.', output_root, afile[2:])
+    for afile in thefiles:
+        foutput_path = os.path.join("lb-output", afile)
         filename = os.path.split(afile)[-1]
 
         if filename.lower() in excluded:
 
-            if allmode:
-                shutil.copy(afile, fileout_path)
+            if fullmode:
+                shutil.copy(afile, foutput_path)
             continue
 
         else:
@@ -32,10 +32,11 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
 
             for line in lines:
 
-                if clsmode:
-                    line = re.sub(r'\t', '    ', line)
-                    line = re.sub(r'\/\/', '#', line)
+                if ecmode:
+                    line = re.sub(r'\t', '    ', line) #tabs to 4 spaces
+                    line = re.sub(r'\/\/', '#', line) #C like comments to the usual number sign
                     line = re.sub(r'^[ ]*(\{[0-9]+\}\{.*\}\{[^{]*\})[^\}\{\r\n\t#\/ a-zA-Z0-9]+(.*)', r'\1\2', line)
+                    #uncommented text outside brackets
 
                 if line.startswith('{'): isBetweenBrackets = True
 
@@ -81,81 +82,60 @@ def linebreak_remover(files, output_root, enc = None, excluded = [], allmode = F
                     isBetweenBrackets = False
 
             if fileout_text != filein_reference:
-
                 files_changed = files_changed + 1
-                with open(fileout_path, 'w', encoding=enc) as fileout:
+                with open(foutput_path, 'w', encoding=enc) as fileout:
                     fileout.write(fileout_text)
 
-            elif allmode:
+            elif fullmode:
+               shutil.copy(afile, foutput_path)
 
-               shutil.copy(afile, fileout_path)
-
-    return [len(files), len(excluded), files_changed, deleted_linebreaks, deleted_spaces]
+    return (len(thefiles), len(excluded), files_changed, deleted_linebreaks, deleted_spaces)
 
 
 if __name__ == '__main__':
 
-    start_msg = "\n\
-This script opens Fallout .msg files, looks for break lines,\n\
-removes them and saves the changes (with the same directory structure)\n\
-in a directory called 'output'. This will also remove unnecessary spaces.\n\
-\n\
-Default settings:\n\
-* fke_dude, deadcomp and democomp are excluded\n\
-* the script will only output files with changes\n\
-\n\n\
-[y]es to proceed, [c]ustom to change the settings or anything else to quit: "
+    par = argparse.ArgumentParser(description="Looks for line breaks and \
+    removes them, saves the results in the output folder (with the same \
+    directory structure). This will also remove unnecessary spaces. Certain \
+    files are excluded by default (fke_dude, deadcomp and democomp) but you \
+    can chage them. Also you can choose to copy all files or only those with \
+    changes.")
+    par.add_argument("target", help="Target folder")
+    par.add_argument("-f", "--fullmode", action="store_true",
+                     help="Full mode, copies all files (even those \
+                     without changes)")
+    par.add_argument("-c", "--ecmode", action="store_true",
+                     help="Extra cleaning mode, it removes tabs, uncommented \
+                     text and replaces double slash for number sign. \
+                     You should recheck the results if you use this mode.")
+    par.add_argument("-r", "--recursive", action="store_true",
+                      help="Recursive folder search; the target path should \
+                      contain the localization folders you want to check")
+    par.add_argument("-e", "--excluded", nargs="*",
+                     default=['fke_dude.msg', 'democomp.msg','deadcomp.msg'],
+                     help="List of excluded files (use lowercase, extension \
+                     and separate with spaces)")
+    args = par.parse_args()
 
-    exclusions_msg = "\n\
-What files do you want to exclude (case insensitive)?, press Enter for none Ex: 'f1.msg f2.msg':\n"
+    thefiles = pathfinder(excluded = ["lb-output", '__pycache__'])
+    treecreator(thefiles, "lb-output")
 
-    mode_msg = "\n\n\
-Do you want the output to include all files (even those without changes)? [y]es or [n]o: "
-
-
-    outputdir = 'lb-output'
-
-    thefiles = pathfinder(excluded = [outputdir, '__pycache__'])
-
-    excluded_files = ['fke_dude.msg', 'democomp.msg','deadcomp.msg']
-    mode = False
-
-    if thefiles:
-        inputcheck = input(start_msg).lower()
-        if inputcheck not in ('yes','y','c','custom'):
-            sys.exit()
-        if inputcheck in ('c','custom'):
-            excluded_files = input(exclusions_msg).lower().split()
-
-            mode = input(mode_msg).lower()
-            if mode in ('yes','y'):
-                mode = True
-            else:
-                mode = False
-
+    path = os.path.abspath(args.target)
+    if not args.recursive:
+        dirnames = [os.path.basename(path)]
     else:
-        sys.exit("There are no .msg files")
-
-
-    print ("\n\nWORKING...\n\n")
-
-    treecreator(thefiles, outputdir)
-
-    dirnames = listdirs(excluded = [outputdir, '__pycache__'])
+        dirnames = listdirs(path, excluded = ["lb-output", '__pycache__'])
 
     for dirname in dirnames:
         other_dirs = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(excluded = [outputdir] + other_dirs)
         enc = encfinder(dirname)
 
-        print( "\n+ Working with %s (%s)...\n\n" % (dirname, enc ) )
+        print( "\n+ Working with %s (%s)..." % (dirname, enc ) )
 
-        results = linebreak_remover(thefiles, outputdir, enc = enc, excluded = excluded_files, allmode = mode)
+        results = linebreak_remover(dirname, enc, args.excluded, args.fullmode, args.ecmode)
 
         print( " - Number of files: %i (%i excluded)" % (results[0], results[1]) )
         print( " - Number of files changed: %i" % results[2] )
         print( " - Line breaks toll: %i" % results[3] )
         print( " - Unnecessary spaces toll: %i" % results[4] )
         print( "   %s completed!\n" % dirname )
-
-    input("\nALL DONE!")
