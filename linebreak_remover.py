@@ -1,56 +1,65 @@
+"""Looks for line breaks and removes them, saves the results in the output
+folder (with the same directory structure). This will also remove unnecessary
+spaces. Certain files are excluded by default (fke_dude, deadcomp and democomp)
+but you can chage them. You can also choose to copy all files or only those
+with changes."""
 import os, re, sys, shutil, argparse
-
-from common import *
+import common
 
 
 #if fmode is False it will write only files with changes
 def linebreak_remover(target, enc = None, excluded = [],
                       fullmode = False, ecmode = False):
 
-    nfiles = 0
-    nspaces = 0
-    nlinebreaks = 0
+    nfiles = nspaces = nlinebreaks = 0
     isBetweenBrackets = False
 
-    thefiles = pathfinder(target, excluded=["lb-output", '__pycache__'])
+    thefiles = common.pathfinder(target, excluded=["lb-output"])
     outpath = os.path.join(".", "lb-output", os.path.basename(target))
-    if os.path.isdir(outpath): shutil.rmtree(outpath)
+    try:
+        shutil.rmtree(outpath)
+    except FileNotFoundError:
+        pass
 
     for afile in thefiles:
+
         filepath = afile.replace(os.path.commonpath((target, afile)), "")
         foutpath = outpath + filepath
-
         filename = os.path.split(afile)[-1]
+
         if filename.lower() in excluded:
             if fullmode:
-                shutil.copy(afile, foutpath)
+                common.copy(afile, foutpath)
             continue
-
         else:
-            opt = [enc, None] #opt = [enconding, errors]
-            lines = alt_read(afile, opt)
+            lines = common.alt_read(afile, enc)
+            text_reference = ''.join(lines)
+            text_out = ''
 
-            filein_reference = ''.join(lines)
-            fileout_text = ''
             for line in lines:
-
                 if ecmode:
-                    line = re.sub(r'\t', '    ', line) #tabs to 4 spaces
-                    line = re.sub(r'\/\/', '#', line) #C like comments to the usual number sign
-                    line = re.sub(r'^[ ]*(\{[0-9]+\}\{.*\}\{[^{]*\})[^\}\{\r\n\t#\/ a-zA-Z0-9]+(.*)', r'\1\2', line)
+                    #tabs to 4 spaces
+                    line = re.sub(r'\t', '    ', line)
+                    #C like comments to the usual number sign
+                    line = re.sub(r'\/\/', '#', line)
                     #uncommented text outside brackets
+                    line = re.sub(r'^[ ]*(\{[0-9]+\}\{.*\}\{[^{]*\})[^\}\{\r\n\t#\/ a-zA-Z0-9]+(.*)', r'\1\2', line)
 
-                if line.startswith('{'): isBetweenBrackets = True
+                if line.startswith('{'):
+                    isBetweenBrackets = True
+                #not empty for normal -single- lines
+                m1 = re.findall(r'\}[ \t\u3000]*$', line)
+                #not empty for lines with inline dev comments
+                m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line)
+                #not empty for lines with inline dev comments (alt. notation)
+                m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line)
+                #not empty for lines with text outside comments or brackets
+                m4 = re.findall(r'\}[ ]*([^ \{\}\#\/\s])+.*$', line)
 
-                m1 = re.findall(r'\}[ \t\u3000]*$', line) #not empty for normal -single- lines
-                m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line) #not empty for lines with inline dev comments
-                m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line) #not empty for lines with inline dev comments (alt. notation)
-                m4 = re.findall(r'\}[ ]*([^ \{\}\#\/\s])+.*$', line) #not empty for lines with text outside comments or brackets
-
-                #counts the number of unnecessary spaces/tabs before deleting them
+                #counts the nº of unnecessary spaces/tabs before deleting them
                 spaces = re.findall(r'\}([ \t\u3000]*)$', line)
                 if spaces:
-                    deleted_spaces = deleted_spaces + len(spaces[0])
+                    nspaces += len(spaces[0])
 
                 #removes any space after the final closing bracket
                 line = re.sub(r'(\})([ \t\u3000]*)$', r'\1', line)
@@ -62,53 +71,47 @@ def linebreak_remover(target, enc = None, excluded = [],
                 if line.startswith('#') or m2 or m3:
                     spaces = re.findall(r'([ \t\u3000]*)$', line)
                     if spaces:
-                        deleted_spaces = deleted_spaces + len(spaces[0])
+                        nspaces += len(spaces[0])
                     line = re.sub(r'([ \t\u3000]*)$', '', line)
-                    fileout_text = fileout_text + line
+                    text_out += line
                     isBetweenBrackets = False
 
                 elif line == '\n' and not isBetweenBrackets:
-                    fileout_text = fileout_text + '\n'
+                    text_out += '\n'
 
                 elif m4:
-                    fileout_text = fileout_text + line
+                    text_out += line
 
                 #line with an open bracket and a line break (main goal)
                 elif not m1 and isBetweenBrackets:
-                    fileout_text = fileout_text + line.replace('\n', '')
-                    deleted_linebreaks = deleted_linebreaks + 1
+                    text_out += line.replace('\n', '')
+                    nlinebreaks += 1
 
                 #write if it doesn't fit the above categories
                 else:
-                    fileout_text = fileout_text + line
+                    text_out += line
                     isBetweenBrackets = False
 
-            if fileout_text != filein_reference:
-                files_changed = files_changed + 1
+            if text_out != text_reference:
+                nfiles += 1
                 while True:
                     try:
                         with open(foutpath, 'w', encoding=enc) as fileout:
-                            fileout.write(fileout_text)
+                            fileout.write(text_out)
                     except FileNotFoundError:
                         os.makedirs(os.path.dirname(foutpath), exist_ok=True)
                         continue
                     break
 
             elif fullmode:
-               shutil.copy(afile, foutpath)
-
+                common.copy(afile, foutpath)
 
     return (len(thefiles), len(excluded), nfiles, nlinebreaks, nspaces)
 
 
 if __name__ == '__main__':
 
-    par = argparse.ArgumentParser(description="Looks for line breaks and \
-    removes them, saves the results in the output folder (with the same \
-    directory structure). This will also remove unnecessary spaces. Certain \
-    files are excluded by default (fke_dude, deadcomp and democomp) but you \
-    can chage them. Also you can choose to copy all files or only those with \
-    changes.")
+    par = argparse.ArgumentParser(description=__doc__)
     par.add_argument("target", help="Target folder")
     par.add_argument("-f", "--fullmode", action="store_true",
                      help="Full mode, copies all files (even those \
@@ -130,22 +133,21 @@ if __name__ == '__main__':
     if not args.recursive:
         dirnames = [os.path.basename(path)]
     else:
-        dirnames = listdirs(path, excluded=["lb-output", '__pycache__'])
+        dirnames = common.listdirs(path, excluded=["lb-output"])
 
     for dirname in dirnames:
-
         if args.recursive:
             dirpath = os.path.join(path, dirname)
         else:
             dirpath = path
 
-        enc = encfinder(dirname)
+        enc = common.encfinder(dirname)
         print("\n+ Working with %s (%s)..." % (dirname, enc))
-        results = linebreak_remover(dirpath, enc, args.excluded,
-                                    args.fullmode, args.ecmode)
+        log = linebreak_remover(dirpath, enc, args.excluded,
+                                args.fullmode, args.ecmode)
 
-        print(" - Number of files: %i (%i excluded)" % (results[0], results[1]))
-        print(" - Number of files changed: %i" % results[2])
-        print(" - Line breaks toll: %i" % results[3])
-        print(" - Unnecessary spaces toll: %i" % results[4])
+        print(" - Number of files: %i (%i excluded)" % (log[0], log[1]))
+        print(" - Number of files changed: %i" % log[2])
+        print(" - Line breaks toll: %i" % log[3])
+        print(" - Unnecessary spaces toll: %i" % log[4])
         print("   %s completed!\n" % dirname)

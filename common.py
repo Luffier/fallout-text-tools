@@ -3,7 +3,8 @@ import os, sys, shutil, fnmatch
 
 #returns a list of the folder names in the target path minus excluded and
 #folders with no .msg files down the directory tree
-def listdirs(target='.', excluded=['__pycache__']):
+def listdirs(target='.', excluded=[]):
+    excluded.append('__pycache__')
     thedirs = [adir for adir in os.listdir(target) if os.path.isdir(adir)]
     thedirs = [adir for adir in thedirs if adir not in excluded]
     for adir in thedirs:
@@ -15,8 +16,9 @@ def listdirs(target='.', excluded=['__pycache__']):
     return thedirs
 
 #returns a list of the files (absolute path) in the target path minus excluded
-def pathfinder(target='.', excluded=['__pycache__']):
+def pathfinder(target='.', excluded=[]):
     filespaths = []
+    excluded.append('__pycache__')
     for root, dirs, files in os.walk(target, topdown=True):
         dirs[:] = [d for d in dirs if d not in excluded]
         for afile in fnmatch.filter(files, '*.msg'):

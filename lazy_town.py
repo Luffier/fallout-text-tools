@@ -1,6 +1,10 @@
+"""Makes the target localization files compatible with the latest Fixt update,
+the result will be a mixture of English and the target language. Levenshtein
+algorithm is used (if you don't have python-Levenshtein, difflib will be used,
+and its results tend to be very different), you can change the lower similarity
+ratio threshold. Creates a log of missing files and lines."""
 import os, re, shutil, argparse
-from common import *
-
+import common
 try:
     import Levenshtein
     ratio = lambda x, y: Levenshtein.ratio(x, y)
@@ -8,14 +12,11 @@ except ImportError:
     import difflib
     ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
     print("python-Levenshtein module not found, using difflib instead")
-
 try:
     import ujson
-    isUltra = True
 except ImportError:
     import json
     print("ujson module not found, using json instead")
-    isUltra = False
 
 
 #makes a dictionary with the content of .msg files found in a given directory
@@ -24,14 +25,13 @@ def analyzer(directory, enc=None, clearcache=False):
 
     if not os.path.isfile('%s.json' % directory) or clearcache:
         data = {}
-        thefiles = pathfinder(target=os.path.join('.', directory))
+        thefiles = common.pathfinder(target=os.path.join('.', directory))
 
         for afile in thefiles:
             filename = os.path.split(afile)[-1]
             data[filename] = {}
 
-            opt = [enc, None] #opt = [enconding, errors]
-            lines = alt_read(afile, opt)
+            lines = common.alt_read(afile, enc)
 
             for line in lines:
                 if line.startswith('{'):
@@ -45,13 +45,17 @@ def analyzer(directory, enc=None, clearcache=False):
                         sys.exit("Aborting...")
 
         with open('%s.json' % directory, 'w') as cacheout:
-            if isUltra: ujson.dump(data, cacheout)
-            else: json.dump(data, cacheout)
+            try:
+                ujson.dump(data, cacheout)
+            except NameError:
+                json.dump(data, cacheout)
 
     else:
         with open('%s.json' % directory, 'r') as cachein:
-            if isUltra: ujson.dump(data, cachein)
-            else: json.dump(data, cachein)
+            try:
+                data = ujson.load(cachein)
+            except NameError:
+                data = json.load(cachein)
     return data
 
 
@@ -109,8 +113,8 @@ def comparator(base, newbase, target, thd=0.9):
 #copies the dictionary's content into the .msg files inside directory
 def injector(loc, directory, enc=None):
 
-    thefiles = pathfinder(target=os.path.join('.', directory))
-    target_enc = encfinder(directory)
+    thefiles = common.pathfinder(target=os.path.join('.', directory))
+    target_enc = common.encfinder(directory)
 
     for afile in thefiles:
 
@@ -119,7 +123,7 @@ def injector(loc, directory, enc=None):
         filename = os.path.split(afile)[-1]
 
         opt = [enc, None] #opt = [enconding, errors]
-        lines = alt_read(afile, opt)
+        lines = common.alt_read(afile, opt)
 
         for line in lines:
 
@@ -154,12 +158,7 @@ def injector(loc, directory, enc=None):
 
 if __name__ == '__main__':
 
-    par = argparse.ArgumentParser(description="Makes the target localization \
-    files compatible with the latest Fixt update, the result will be a \
-    mixture of English and the target language. Levenshtein algorithm is used \
-    (if you don't have python-Levenshtein, difflib will be used, and its \
-    results tend to be very different), you can change the lower similarity \
-    ratio threshold. Creates a log of missing files and lines.")
+    par = argparse.ArgumentParser(description=__doc__)
     par.add_argument("base", default="ENGLISH_BASE",
                      help="English files used during the localization process (folder name)")
     par.add_argument("newbase", default="ENGLISH_NEW", help="Current English files (folder name)")
@@ -168,7 +167,7 @@ if __name__ == '__main__':
     par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
     args = par.parse_args()
 
-    thefiles = pathfinder()
+    thefiles = common.pathfinder()
     if not thefiles:
         sys.exit("There are no .msg files.")
 
@@ -180,8 +179,8 @@ if __name__ == '__main__':
     if os.path.isdir(target_new):
         shutil.rmtree(target_new)
 
-    base_enc = encfinder(args.base)
-    target_enc = encfinder(args.target)
+    base_enc = common.encfinder(args.base)
+    target_enc = common.encfinder(args.target)
     output_path = os.path.join('.', target_new)
 
     print("\n\nWORKING...\n\n")
