@@ -1,13 +1,13 @@
-import os, re, ujson, shutil, argparse
+import os, re, shutil, argparse
 from common import *
 
 try:
     import Levenshtein
-    isLevenshtein = True
+    ratio = lambda x, y: Levenshtein.ratio(x, y)
 except ImportError:
     import difflib
-    print("Levenshtein module not found, using difflib instead")
-    isLevenshtein = False
+    ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
+    print("python-Levenshtein module not found, using difflib instead")
 
 try:
     import ujson
@@ -68,11 +68,6 @@ def comparator(base, newbase, target, thd=0.9):
     missing_files = 0
     log = ""
 
-    if isLevenshtein:
-        ratio = lambda x, y: Levenshtein.ratio(x, y)
-    else:
-        ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
-
     newtarget = newbase
 
     for afile in base: #for every filename in base (original files)
@@ -80,9 +75,11 @@ def comparator(base, newbase, target, thd=0.9):
             if target.get(afile): #and only if it exists in target (loc files)
                 for index in base[afile]: #for every index in filename
                     if newbase[afile].get(index): #only if line exists in Fixt's file
-                        #if the difference ratio between the 2 strings is above the thd
-                        if ratio(base[afile].get(index), newbase[afile].get(index)) >= thd:
-                            if target[afile].get(index): #and the loc wasn't complete (?)
+                        #if the dif. ratio between the two is above the thd
+                        if ratio(base[afile].get(index),
+                                 newbase[afile].get(index)) >= thd:
+                            #and the loc wasn't complete (?)
+                            if target[afile].get(index):
                                 #the old content is copied
                                 newtarget[afile][index] = target[afile][index]
                                 above_thd += 1

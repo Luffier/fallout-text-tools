@@ -3,10 +3,11 @@ from math import factorial
 
 try:
     import Levenshtein
-    isLevenshtein = True
+    ratio = lambda x, y: Levenshtein.ratio(x, y)
 except ImportError:
     import difflib
-    isLevenshtein = False
+    lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
+    print("python-Levenshtein module not found, using difflib instead")
 
 from common import *
 from lazy_town import analyzer
@@ -20,15 +21,10 @@ def similarity_finder(loc, thd=(1, 0.9)):
 
     output = ''
 
-    if isLevenshtein:
-        ratio = lambda x, y: Levenshtein.ratio(x, y)
-    else:
-        ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
-
     flag = False
-    count = 0
-    count_total = len(loc)
-    for afile in loc:
+
+    total_count = len(loc)
+    for count, afile in enumerate(loc, start=1):
         for index1, index2 in itertools.combinations(loc[afile], 2):
             if thd[0] > ratio(loc[afile].get(index1), loc[afile].get(index2)) >= thd[1]:
                 if not flag: output += "\n\n%s\n\n" % afile
@@ -39,8 +35,7 @@ def similarity_finder(loc, thd=(1, 0.9)):
             else:
                 below_thd += 1
         flag = False
-        count += 1
-        sys.stdout.write("\r%s/%s" % (count, count_total))
+        sys.stdout.write("\r%s/%s" % (count, total_count))
         sys.stdout.flush()
     print("\n\nThere were %i lines above the threshold and %i below." % (above_thd, below_thd))
     return output
