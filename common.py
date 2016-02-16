@@ -1,83 +1,78 @@
-import os, sys, fnmatch
+import os, sys, shutil, fnmatch
 
 
-#returns a list of the folder names in target minus excluded (list of folders)
-#excludes folders with no .msg files (recursive)
+#returns a list of the folder names in the target path minus excluded and
+#folders with no .msg files down the directory tree
 def listdirs(target='.', excluded=['__pycache__']):
-
-    dirs = [adir for adir in os.listdir(target) if os.path.isdir(adir)]
-    dirs = [adir for adir in dirs if adir not in excluded]
-
-    for adir in dirs:
-        flag = False
-        for wroot, wdirs, wfiles in os.walk(adir):
-            if fnmatch.filter(wfiles, '*.msg'):
-                flag = True
+    thedirs = [adir for adir in os.listdir(target) if os.path.isdir(adir)]
+    thedirs = [adir for adir in thedirs if adir not in excluded]
+    for adir in thedirs:
+        for root, dirs, files in os.walk(adir):
+            if fnmatch.filter(files, '*.msg'):
                 break
-        if not flag:
-            dirs.remove(adir)
-    return dirs
+        else:
+            thedirs.remove(adir)
+    return thedirs
 
-
-#returns a list of the files (absolute path) in a
-#target folder minus excluded (list of folders)
+#returns a list of the files (absolute path) in the target path minus excluded
 def pathfinder(target='.', excluded=['__pycache__']):
-
     filespaths = []
-    for root, dirnames, filenames in os.walk(target):
-        if excluded:
-            for exclusion in excluded:
-                if exclusion in dirnames:
-                    dirnames.remove(exclusion)
-        for filename in fnmatch.filter(filenames, '*.msg'):
-            filespaths.append(os.path.join(root, filename))
+    for root, dirs, files in os.walk(target, topdown=True):
+        dirs[:] = [d for d in dirs if d not in excluded]
+        for afile in fnmatch.filter(files, '*.msg'):
+            filespaths.append(os.path.join(root, afile))
     return filespaths
 
-
-#returns the encoding of a given folder name based on a dictionary
-#on known languages and their encoding (not guessing involved)
+#returns the encoding of a given folder name based on a dictionary of known
+#languages keywords and their respective encoding (not guessing involved)
 def encfinder(dirname):
-
+    enc = None
     codec_dic = {
-    'cp1252':['english', 'french', 'german', 'italian', 'spanish'],
-    'latin2':['hungarian'],
-    'cp866':['russian_fargus'],
-    'cp1251':['russian_1c'],
-    'cp1250':['czech', 'polish'],
-    'gb18030':['chinese']
+    'cp1252': ['english', 'english_fixt', 'french', 'german', 'italian',
+               'spanish', 'spanish_female', 'spanish_male'],
+    'latin2': ['hungarian'],
+    'cp866': ['russian_fargus'],
+    'cp1251': ['russian_1c'],
+    'cp1250': ['czech', 'polish'],
+    'gb18030': ['chinese']
     }
 
-    enc = None
-    for codec in codec_dic:
-        if [lang for lang in codec_dic[codec] if lang in dirname.lower()]:
+    for codec, lang_keyword in codec_dic.items():
+        if dirname.lower() in lang_keyword:
             enc = codec
             break
     return enc
 
-
-#simple open -> readlines but with exceptions handling for either a unknown
-#codec name/alias or a decoding error, where opt = [enconding, errors]
-def alt_read(filepath, opt=[None, None]):
-
+#simple 'open and readlines' but with exceptions handling for either an unknown
+#codec name/alias or a decoding error
+def alt_read(filepath, enc=None, err=None):
     while True:
         try:
-            ofile = open(filepath, 'r', encoding=opt[0], errors=opt[1])
-            try:
-                content = ofile.readlines()
-                break
-
-            except UnicodeDecodeError:
-                print(filepath + "\n ---> Decoding error (using %s) (ignoring \
-                      for now; information will be lost)\n" % opt[0])
-                opt[1] = 'ignore'
-
-            ofile.close()
-
+            with open(filepath, 'r', encoding=enc, errors=err) as fileout:
+                try:
+                    lines = fileout.readlines()
+                    break
+                except UnicodeDecodeError:
+                    print(filepath)
+                    print(" ---> Decoding error (%s) (ignoring for now; \
+                          information will be lost)" % enc)
+                    err = 'ignore'
         except LookupError:
-            opt[0] = input(filepath + "\n ---> Unknown codec. Please type a \
-                           supported codec: ")
+            print(filepath)
+            enc = input(" ---> Unknown codec. Type a supported codec: ")
+            if not enc:
+                enc = None
+    return lines
 
-    return content
+#for copying files and creating dirs as needed
+def copy(source, destination):
+    while True:
+        try:
+            shutil.copy(source, destination)
+        except FileNotFoundError:
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            continue
+        break
 
 
 if __name__ == '__main__':
