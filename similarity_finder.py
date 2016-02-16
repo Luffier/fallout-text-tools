@@ -13,7 +13,7 @@ from lazy_town import analyzer
 
 
 #logs similar lines within a loc dict (analyzer); not very usuful as of now
-def similarity_finder(loc, thd = (1, 0.9)):
+def similarity_finder(loc, thd=(1, 0.9)):
 
     above_thd = 0
     below_thd = 0
@@ -27,8 +27,8 @@ def similarity_finder(loc, thd = (1, 0.9)):
 
     flag = False
     count = 0
-    count_total = len(loc.keys())
-    for afile in loc.keys():
+    count_total = len(loc)
+    for afile in loc:
         for index1, index2 in itertools.combinations(loc[afile], 2):
             if thd[0] > ratio(loc[afile].get(index1), loc[afile].get(index2)) >= thd[1]:
                 if not flag: output += "\n\n%s\n\n" % afile
@@ -59,5 +59,5 @@ if __name__ == '__main__':
         target_dic = analyzer(args.target, target_enc)
 
         result = similarity_finder(target_dic)
-        with open('sf_result.txt', 'w', encoding = target_enc) as foutput:
+        with open('sf_result.txt', 'w', encoding=target_enc) as foutput:
             fileout.write(result)

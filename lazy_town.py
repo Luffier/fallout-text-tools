@@ -19,12 +19,12 @@ except ImportError:
 
 
 #makes a dictionary with the content of .msg files found in a given directory
-#dictionary structure: {'filename':{'index':'line content'}}
-def analyzer(directory, enc = None, clearcache = False):
+#dictionary structure: {'filename': {'index': 'line content'}}
+def analyzer(directory, enc=None, clearcache=False):
 
     if not os.path.isfile('%s.json' % directory) or clearcache:
         data = {}
-        thefiles = pathfinder(target = os.path.join('.', directory))
+        thefiles = pathfinder(target=os.path.join('.', directory))
 
         for afile in thefiles:
             filename = os.path.split(afile)[-1]
@@ -44,14 +44,14 @@ def analyzer(directory, enc = None, clearcache = False):
                         print("Line content: '%s'\n\n" % line)
                         sys.exit("Aborting...")
 
-        with open('%s.json' % directory, 'w') as cacheOut:
-            if isUltra: ujson.dump(data, cacheOut)
-            else: json.dump(data, cacheOut)
+        with open('%s.json' % directory, 'w') as cacheout:
+            if isUltra: ujson.dump(data, cacheout)
+            else: json.dump(data, cacheout)
 
     else:
-        with open('%s.json' % directory, 'r') as cacheIn:
-            if isUltra: ujson.dump(data, cacheIn)
-            else: json.dump(data, cacheIn)
+        with open('%s.json' % directory, 'r') as cachein:
+            if isUltra: ujson.dump(data, cachein)
+            else: json.dump(data, cachein)
     return data
 
 
@@ -60,7 +60,7 @@ def analyzer(directory, enc = None, clearcache = False):
 #target => localization files
 #merges newbase and target by comparing base and newbase, if the two lines have
 #a similarity ratio higher than the threshold value, the target content is used
-def comparator(base, newbase, target, thd = 0.9):
+def comparator(base, newbase, target, thd=0.9):
 
     above_thd = 0
     below_thd = 0
@@ -75,10 +75,10 @@ def comparator(base, newbase, target, thd = 0.9):
 
     newtarget = newbase
 
-    for afile in base.keys(): #for every filename in base (original english files)
-        if newbase.get(afile): #only if it exists in newbase (Fixt's english files)
-            if target.get(afile): #and only if it exists in target
-                for index in base[afile].keys(): #for every index in filename
+    for afile in base: #for every filename in base (original files)
+        if newbase.get(afile): #only if it exists in newbase (Fixt files)
+            if target.get(afile): #and only if it exists in target (loc files)
+                for index in base[afile]: #for every index in filename
                     if newbase[afile].get(index): #only if line exists in Fixt's file
                         #if the difference ratio between the 2 strings is above the thd
                         if ratio(base[afile].get(index), newbase[afile].get(index)) >= thd:
@@ -110,9 +110,9 @@ def comparator(base, newbase, target, thd = 0.9):
 
 
 #copies the dictionary's content into the .msg files inside directory
-def injector(loc, directory, enc = None):
+def injector(loc, directory, enc=None):
 
-    thefiles = pathfinder(target = os.path.join('.', directory))
+    thefiles = pathfinder(target=os.path.join('.', directory))
     target_enc = encfinder(directory)
 
     for afile in thefiles:
@@ -142,7 +142,7 @@ def injector(loc, directory, enc = None):
 
         err = None
         while True:
-            fileout = open(afile, 'w', encoding = target_enc, errors = err)
+            fileout = open(afile, 'w', encoding=target_enc, errors=err)
             try:
                 fileout.write(fileout_text)
                 err = None

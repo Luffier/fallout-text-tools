@@ -11,9 +11,9 @@ def mismatch_finder(base, target):
     output_text = ''
 
     flag = False
-    count_total = len(base.keys())
+    count_total = len(base)
 
-    for afile in target.keys():
+    for afile in target:
         for index1, index2 in itertools.combinations(target[afile], 2):
             if base[afile].get(index1) == base[afile].get(index2):
                 if target[afile].get(index1) != target[afile].get(index2):
@@ -41,16 +41,16 @@ def mismatch_finder_global(base, target):
     base_alt = {}
     target_alt = {}
 
-    for afile in target.keys():
-        for index in target[afile].keys():
+    for afile in target:
+        for index in target[afile]:
             target_alt[afile+index] = target[afile][index]
 
-    for afile in base.keys():
-        for index in base[afile].keys():
+    for afile in base:
+        for index in base[afile]:
             base_alt[afile+index] = base[afile][index]
 
     flag = False
-    count_total = factorial(len(base_alt.keys())) // (2 *  factorial(len(base_alt.keys()) - 2))
+    count_total = factorial(len(base_alt) // (2 *  factorial(len(base_alt) - 2))
     fname_pattern = re.compile(r'[0-9]{3,5}')
     index_pattern = re.compile(r'.*\.MSG', re.I)
     print("\nTotal pairs: %s\n" % count_total)
@@ -96,10 +96,10 @@ if __name__ == '__main__':
 
     if args.normalmode:
         result = mismatch_finder(base_dict, target_dict)
-        with open('mf_result.txt', 'w', encoding = target_enc) as foutput:
+        with open('mf_result.txt', 'w', encoding=target_enc) as foutput:
             fileout.write(result)
 
     if args.globalmode:
         result = mismatch_finder_global(base_dict, target_dict)
-        with open('mfG_result.txt', 'w', encoding = target_enc) as foutput:
+        with open('mfG_result.txt', 'w', encoding=target_enc) as foutput:
             fileout.write(result)

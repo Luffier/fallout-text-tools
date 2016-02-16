@@ -3,7 +3,7 @@ import os, sys, fnmatch
 
 #returns a list of the folder names in target minus excluded (list of folders)
 #excludes folders with no .msg files (recursive)
-def listdirs(target = '.', excluded = ['__pycache__']):
+def listdirs(target='.', excluded=['__pycache__']):
 
     dirs = [adir for adir in os.listdir(target) if os.path.isdir(adir)]
     dirs = [adir for adir in dirs if adir not in excluded]
@@ -21,7 +21,7 @@ def listdirs(target = '.', excluded = ['__pycache__']):
 
 #returns a list of the files (absolute path) in a
 #target folder minus excluded (list of folders)
-def pathfinder(target = '.', excluded = ['__pycache__']):
+def pathfinder(target='.', excluded=['__pycache__']):
 
     filespaths = []
     for root, dirnames, filenames in os.walk(target):
@@ -48,7 +48,7 @@ def encfinder(dirname):
     }
 
     enc = None
-    for codec in codec_dic.keys():
+    for codec in codec_dic:
         if [lang for lang in codec_dic[codec] if lang in dirname.lower()]:
             enc = codec
             break
@@ -57,7 +57,7 @@ def encfinder(dirname):
 
 #simple open -> readlines but with exceptions handling for either a unknown
 #codec name/alias or a decoding error, where opt = [enconding, errors]
-def alt_read(filepath, opt = [None, None]):
+def alt_read(filepath, opt=[None, None]):
 
     while True:
         try:

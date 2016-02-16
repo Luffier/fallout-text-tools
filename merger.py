@@ -40,7 +40,7 @@ dic_msg = '\nDo you want to generate a dictionary for MS Word (little use for no
 
 def startcheck(message):
     inputcheck = input(message).lower()
-    if inputcheck in ('yes','y'):
+    if inputcheck in ('yes', 'y'):
         pass
     else:
         sys.exit(1)
@@ -50,7 +50,7 @@ def optionscheck(questions):
     answers = []
     for question in questions:
         inputcheck = input(question).lower()
-        if inputcheck in ('yes','y'):
+        if inputcheck in ('yes', 'y'):
             answers.append(True)
         else:
             answers.append(False)
@@ -74,7 +74,7 @@ for dirname in dirnames:
 
 
     other_dirs = [d for d in dirnames if d is not dirname]
-    thefiles = pathfinder(excluded = other_dirs)
+    thefiles = pathfinder(excluded=other_dirs)
     enc = encfinder(dirname)
 
     for afile in thefiles:
@@ -138,7 +138,7 @@ for dirname in dirnames:
 
 
     try:
-        with open('merged_text-%s.txt' % dirname, 'w', encoding = par[0]) as output:
+        with open('merged_text-%s.txt' % dirname, 'w', encoding=par[0]) as output:
             output.write(result)
 
     except PermissionError:
@@ -146,7 +146,7 @@ for dirname in dirnames:
 
     if dic:
         try:
-            with open('merged_text.dic', 'w', encoding = 'utf_16') as dic_file:
+            with open('merged_text.dic', 'w', encoding='utf_16') as dic_file:
                 dic_file.write(dic_result)
 
         except PermissionError:

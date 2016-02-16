@@ -25,7 +25,7 @@ def syntax_checker(files, enc, fullmode=False):
 
         for line in lines:
 
-            brackets = [char for char in line if char in ('{','}')]
+            brackets = [char for char in line if char in ('{', '}')]
             brackets = ''.join(brackets)
             npairs = brackets.count('{}')
 
@@ -37,15 +37,15 @@ def syntax_checker(files, enc, fullmode=False):
 
             if match:
                 if fullmode: result += "%4s" % str(reference.index(line) + 1)
-                result += "        Non-numeric on index  -->  '%s'\n" % line.replace('\n','')
+                result += "        Non-numeric on index  -->  '%s'\n" % line.replace('\n', '')
 
             if npairs < 3:
                 if fullmode: result += "%4s" % str(reference.index(line) + 1)
-                result += "        Less tran three pairs -->  '%s'\n" % line.replace('\n','')
+                result += "        Less tran three pairs -->  '%s'\n" % line.replace('\n', '')
 
             elif npairs > 3:
                 if fullmode: result += "%4s" % str(reference.index(line) + 1)
-                result += "        More than three pairs -->  '%s'\n" % line.replace('\n','')
+                result += "        More than three pairs -->  '%s'\n" % line.replace('\n', '')
 
         if flag: result += "\n\n"
         flag = False
@@ -90,7 +90,7 @@ if __name__ == '__main__':
 
     for dirname in dirnames:
         other_dirs = [d for d in dirnames if d is not dirname]
-        thefiles = pathfinder(path, excluded = ['__pycache__'] + other_dirs)
+        thefiles = pathfinder(path, excluded=['__pycache__'] + other_dirs)
         enc = encfinder(dirname)
 
         print("\n+ Working with %s (%s)..." % (dirname, enc))

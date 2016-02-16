@@ -12,12 +12,12 @@ def linebreak_remover(target, enc = None, excluded = [],
     nlinebreaks = 0
     isBetweenBrackets = False
 
-    thefiles = pathfinder(target, excluded = ["lb-output", '__pycache__'])
-    outpath = ".\\lb-output\\" + os.path.basename(target)
+    thefiles = pathfinder(target, excluded=["lb-output", '__pycache__'])
+    outpath = os.path.join(".", "lb-output", os.path.basename(target))
     if os.path.isdir(outpath): shutil.rmtree(outpath)
 
     for afile in thefiles:
-        filepath = afile.replace(os.path.commonpath((target,afile)),"")
+        filepath = afile.replace(os.path.commonpath((target, afile)), "")
         foutpath = outpath + filepath
 
         filename = os.path.split(afile)[-1]
@@ -75,7 +75,7 @@ def linebreak_remover(target, enc = None, excluded = [],
 
                 #line with an open bracket and a line break (main goal)
                 elif not m1 and isBetweenBrackets:
-                    fileout_text = fileout_text + line.replace('\n','')
+                    fileout_text = fileout_text + line.replace('\n', '')
                     deleted_linebreaks = deleted_linebreaks + 1
 
                 #write if it doesn't fit the above categories
@@ -121,7 +121,7 @@ if __name__ == '__main__':
                       help="Recursive folder search; the target path should \
                       contain the localization folders you want to check")
     par.add_argument("-e", "--excluded", nargs="*",
-                     default=['fke_dude.msg', 'democomp.msg','deadcomp.msg'],
+                     default=['fke_dude.msg', 'democomp.msg', 'deadcomp.msg'],
                      help="List of excluded files (use lowercase, extension \
                      and separate with spaces)")
     args = par.parse_args()
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     if not args.recursive:
         dirnames = [os.path.basename(path)]
     else:
-        dirnames = listdirs(path, excluded = ["lb-output", '__pycache__'])
+        dirnames = listdirs(path, excluded=["lb-output", '__pycache__'])
 
     for dirname in dirnames:
 
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         results = linebreak_remover(dirpath, enc, args.excluded,
                                     args.fullmode, args.ecmode)
 
-        print(" - Number of files: %i (%i excluded)" % (results[0],results[1]))
+        print(" - Number of files: %i (%i excluded)" % (results[0], results[1]))
         print(" - Number of files changed: %i" % results[2])
         print(" - Line breaks toll: %i" % results[3])
         print(" - Unnecessary spaces toll: %i" % results[4])

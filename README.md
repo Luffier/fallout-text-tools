@@ -2,8 +2,7 @@
 
 A few scripts to ease the maintenance of Fallout's text files (1 and 2).
 Made for both practical (Fallout Fixt) and educational purposes (aka ugly code).
-Made for Python 3 in Windows (may not work on UNIX systems because of the way
-I chose to handle file paths).
+Made for Python 3 in Windows (but it should work on UNIX systems too).
 
 
 ## Basic instructions for Windows

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     will be saved into 'dc-result.txt'. The script doesn't take into account \
     index numbers inside dev comments.")
     par.add_argument("target", help="Target folder")
-    par.add_argument("-r", "--recursive", action="store_true",
+    par.add_argument("-r", "--recursive", action="store_true", 
                       help="Recursive folder search; the target path should \
                       contain the localization folders you want to check")
     args = par.parse_args()
