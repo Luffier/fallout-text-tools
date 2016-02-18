@@ -5,7 +5,7 @@ import os, sys, shutil, fnmatch
 #folders with no .msg files down the directory tree
 def listdirs(target='.', excluded=[]):
     excluded.append('__pycache__')
-    thedirs = [adir for adir in os.listdir(target) if os.path.isdir(adir)]
+    thedirs = next(os.walk(target))[1] #os.walk() returns root, dirs [1], files
     thedirs = [adir for adir in thedirs if adir not in excluded]
     for adir in thedirs:
         for root, dirs, files in os.walk(adir):
