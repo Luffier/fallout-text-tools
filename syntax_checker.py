@@ -13,19 +13,19 @@ import common
 #pairs them and flags if there's more than 3 pairs or a non-numeric character
 #is found on the index section.
 def syntax_checker(files, enc, fullmode=False):
-    result = ''
+    log = ''
     for afile in files:
         flag = False
 
-        lines = common.alt_read(afile, enc)
+        lines = common.open(afile, encoding=enc)
 
         if fullmode:
             reference = lines
 
-        lines = [line for line in lines if not re.findall(r'^[ ]*#', line)]
-        lines = [line for line in lines if line != '\n']
-        lines = [line for line in lines if not re.findall(r'^[ ]+$', line)]
-        lines = [line for line in lines if line]
+        lines = [l for l in lines if not re.findall(r'^[ ]*#', l)]
+        lines = [l for l in lines if l != '\n']
+        lines = [l for l in lines if not re.findall(r'^[ ]+$', l)]
+        lines = [l for l in lines if l]
 
         for line in lines:
 
@@ -33,32 +33,35 @@ def syntax_checker(files, enc, fullmode=False):
             brackets = ''.join(brackets)
             npairs = brackets.count('{}')
 
-            match = re.findall(r'[ ]*\{.*([^\{\}0-9]+).*\}\{.*\}\{[^{]*\}', line)
+            match = re.findall(r'[ ]*\{.*([^\{\}0-9]+).*\}'
+                               r'\{.*\}'
+                               r'\{[^{]*\}', line)
 
             if ((npairs != 3) and (not flag)) or match:
                 flag = True
-                result += afile + "\n"
+                log += afile + "\n"
 
             if match:
                 if fullmode:
-                    result += "%4s" % str(reference.index(line) + 1)
-                result += "        Non-numeric on index  -->  '%s'\n" % line.replace('\n', '')
-
+                    log += "{:d}".format(reference.index(line) + 1)
+                log += "        Non-numeric on index   -->  "
+                log += "'{}'\n".format(line.replace('\n', ''))
             if npairs < 3:
                 if fullmode:
-                    result += "%4s" % str(reference.index(line) + 1)
-                result += "        Less tran three pairs -->  '%s'\n" % line.replace('\n', '')
-
+                    log += "{:d}".format(reference.index(line) + 1)
+                log += "        Less than three pairs  -->  "
+                log += "'{}'\n".format(line.replace('\n', ''))
             elif npairs > 3:
                 if fullmode:
-                    result += "%4s" % str(reference.index(line) + 1)
-                result += "        More than three pairs -->  '%s'\n" % line.replace('\n', '')
+                    log += "{:d}".format(reference.index(line) + 1)
+                log += "        More than three pairs  -->  "
+                log += "'{}'\n".format(line.replace('\n', ''))
 
         if flag:
-            result += "\n\n"
+            log += "\n\n"
         flag = False
 
-    return result
+    return log
 
 
 if __name__ == '__main__':
@@ -92,13 +95,13 @@ if __name__ == '__main__':
         thefiles = common.pathfinder(path, excluded=other_dirs)
         enc = common.encfinder(dirname)
 
-        print("\n+ Working with %s (%s)..." % (dirname, enc))
-        output = syntax_checker(thefiles, enc, fullmode=args.fullmode)
+        print("\n+ Working with {} ({})...".format(dirname, enc))
+        log = syntax_checker(thefiles, enc, fullmode=args.fullmode)
 
-        if output:
-            output = help_msg + output
-            with open('sc-result-%s.txt' % dirname, 'w', encoding=enc) as foutput:
-                foutput.write(output)
+        if log:
+            log = help_msg + log
+            with open('sc-{}.txt'.format(dirname), 'w', encoding=enc) as flog:
+                flog.write(log)
             print("  -> One or more syntax errors were found!")
         else:
             print("  -> No syntax errors found!")

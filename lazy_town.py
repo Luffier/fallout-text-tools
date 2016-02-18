@@ -23,7 +23,7 @@ except ImportError:
 #dictionary structure: {'filename': {'index': 'line content'}}
 def analyzer(directory, enc=None, clearcache=False):
 
-    if not os.path.isfile('%s.json' % directory) or clearcache:
+    if not os.path.isfile('{}.json'.format(directory)) or clearcache:
         data = {}
         thefiles = common.pathfinder(target=os.path.join('.', directory))
 
@@ -31,27 +31,29 @@ def analyzer(directory, enc=None, clearcache=False):
             filename = os.path.split(afile)[-1]
             data[filename] = {}
 
-            lines = common.alt_read(afile, enc)
+            lines = common.open(afile, encoding=enc)
 
             for line in lines:
                 if line.startswith('{'):
-                    content = re.findall(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
+                    content = re.findall(r'^[ ]*\{([0-9]+)\}'
+                                         r'\{(.*)\}'
+                                         r'\{([^{]*)\}', line)
                     try:
                         index = content[0][0]
                         data[filename][index] = content[0][2]
                     except IndexError:
-                        print("There are syntax errors in %s:\n\n" % afile)
-                        print("Line content: '%s'\n\n" % line)
+                        print("There are syntax errors in:\n{}".format(afile))
+                        print("Line content: '{}'".format(line))
                         sys.exit("Aborting...")
 
-        with open('%s.json' % directory, 'w') as cacheout:
+        with open('{}.json'.format(directory), 'w') as cacheout:
             try:
                 ujson.dump(data, cacheout)
             except NameError:
                 json.dump(data, cacheout)
 
     else:
-        with open('%s.json' % directory, 'r') as cachein:
+        with open('{}.json'.format(directory)) as cachein:
             try:
                 data = ujson.load(cachein)
             except NameError:
@@ -78,7 +80,7 @@ def comparator(base, newbase, target, thd=0.9):
         if newbase.get(afile): #only if it exists in newbase (Fixt files)
             if target.get(afile): #and only if it exists in target (loc files)
                 for index in base[afile]: #for every index in filename
-                    if newbase[afile].get(index): #only if line exists in Fixt's file
+                    if newbase[afile].get(index): #only if line exists in Fixt
                         #if the dif. ratio between the two is above the thd
                         if ratio(base[afile].get(index),
                                  newbase[afile].get(index)) >= thd:
@@ -88,21 +90,22 @@ def comparator(base, newbase, target, thd=0.9):
                                 newtarget[afile][index] = target[afile][index]
                                 above_thd += 1
                             else:
-                                log += "Content not found in target (%s %s)\n" % (afile, index)
+                                log += "Content not found in target "
+                                log += "({} {})\n".format(afile, index)
                                 not_found += 1
                         else:
                             below_thd += 1
             else:
-                log += "Missing file in target folder (%s)\n" % afile
+                log += "Missing file in target folder ({})\n".format(afile)
                 missing_files += 1
         else:
-            log += "Missing file in Fixt folder (%s)\n" % afile
+            log += "Missing file in Fixt folder ({})\n".format(afile)
             missing_files += 1
 
-    print("There were %i lines above the threshold" % above_thd)
-    print("There were %i lines below the threshold" % below_thd)
-    print("There are %i lines missing." % not_found)
-    print("There are %i files missing" % missing_files)
+    print("There were {:d} lines above the threshold".format(above_thd))
+    print("There were {:d} lines below the threshold".format(below_thd))
+    print("There are {:d} lines missing.".format(not_found))
+    print("There are {:d} files missing".format(missing_files))
 
     with open('lt-log.txt', 'w') as logfile:
         logfile.write(log)
@@ -118,53 +121,48 @@ def injector(loc, directory, enc=None):
 
     for afile in thefiles:
 
-        fileout_text = ''
+        text_out = ''
 
         filename = os.path.split(afile)[-1]
 
-        opt = [enc, None] #opt = [enconding, errors]
-        lines = common.alt_read(afile, opt)
+        lines = common.open(afile, encoding=enc)
 
         for line in lines:
 
             if line.startswith('{'):
-                content = re.search(r'^[ ]*\{([0-9]+)\}\{(.*)\}\{([^{]*)\}', line)
+                content = re.search(r'^[ ]*\{([0-9]+)\}'
+                                    r'\{(.*)\}'
+                                    r'\{([^{]*)\}', line)
                 index = content.group(1)
                 if index in loc[filename]:
                     if content.group(3):
-                        line = line[:content.start(3)] + loc[filename][index] + line[content.end(3):]
-                fileout_text = fileout_text + line
+                        line = line[:content.start(3)] + \
+                               loc[filename][index] + \
+                               line[content.end(3):]
+                text_out += line
 
             elif line == '\n':
-                fileout_text = fileout_text + '\n'
+                text_out += '\n'
 
             else:
-                fileout_text = fileout_text + line
+                text_out += line
 
-        err = None
-        while True:
-            fileout = open(afile, 'w', encoding=target_enc, errors=err)
-            try:
-                fileout.write(fileout_text)
-                err = None
-                break
-
-            except UnicodeEncodeError:
-                err = 'ignore'
-                print(afile + "\n ---> Decoding error (using %s; information will be lost)\n" % target_enc)
-
-            fileout.close()
+        common.open(afile, out=text_out, encoding=target_enc, errors=err)
 
 
 if __name__ == '__main__':
 
     par = argparse.ArgumentParser(description=__doc__)
     par.add_argument("base", default="ENGLISH_BASE",
-                     help="English files used during the localization process (folder name)")
-    par.add_argument("newbase", default="ENGLISH_NEW", help="Current English files (folder name)")
+                     help="English files used during the \
+                     localization process (folder name)")
+    par.add_argument("newbase", default="ENGLISH_NEW",
+                     help="Current English files (folder name)")
     par.add_argument("target", help="Target files (folder name)")
-    par.add_argument("-t", "--threshold", type=float, default=0.9, help="Lower similarity ratio threshold")
-    par.add_argument("-c", "--clearcache", action="store_true", help="Clears json cache files")
+    par.add_argument("-t", "--threshold", type=float, default=0.9,
+                     help="Lower similarity ratio threshold")
+    par.add_argument("-c", "--clearcache", action="store_true",
+                     help="Clears json cache files")
     args = par.parse_args()
 
     thefiles = common.pathfinder()
@@ -173,7 +171,7 @@ if __name__ == '__main__':
 
     for folder in (args.base, args.newbase):
         if not os.path.isdir(folder):
-            sys.exit("\n%s folder missing. Aborting..." % folder)
+            sys.exit("\n{} folder missing. Aborting...".format(folder))
 
     target_new = args.target + '_NEW'
     if os.path.isdir(target_new):
@@ -189,7 +187,8 @@ if __name__ == '__main__':
     new_base_dict = analyzer(args.newbase, base_enc, args.clearcache)
     target_dict = analyzer(args.target, target_enc, args.clearcache)
 
-    target_new_dict = comparator(base_dict, new_base_dict, target_dict, args.threshold)
+    target_new_dict = comparator(base_dict, new_base_dict,
+                                 target_dict, args.threshold)
 
     shutil.copytree(args.newbase, output_path)
     injector(target_new_dict, output_path, base_enc)

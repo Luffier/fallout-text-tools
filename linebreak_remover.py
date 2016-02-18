@@ -35,7 +35,7 @@ def linebreak_remover(target, enc = None, excluded = [],
         foutpath = outpath + foutpath
         filename = os.path.basename(afile)
 
-        lines = common.alt_read(afile, enc)
+        lines = common.open(afile, encoding=enc)
         text_reference = ''.join(lines)
         text_out = ''
 
@@ -98,8 +98,8 @@ def linebreak_remover(target, enc = None, excluded = [],
             nfiles += 1
             while True:
                 try:
-                    with open(foutpath, 'w', encoding=enc) as fileout:
-                        fileout.write(text_out)
+                    with open(foutpath, 'w', encoding=enc) as foutput:
+                        foutput.write(text_out)
                 except FileNotFoundError:
                     os.makedirs(os.path.dirname(foutpath), exist_ok=True)
                     continue
@@ -143,12 +143,12 @@ if __name__ == '__main__':
             dirpath = path
 
         enc = common.encfinder(dirname)
-        print("\n+ Working with %s (%s)..." % (dirname, enc))
+        print("\n+ Working with {} ({})...".format(dirname, enc))
         log = linebreak_remover(dirpath, enc, args.excluded,
                                 args.fullmode, args.ecmode)
 
-        print(" - Number of files: %i (%i excluded)" % (log[0], log[1]))
-        print(" - Number of files changed: %i" % log[2])
-        print(" - Line breaks toll: %i" % log[3])
-        print(" - Unnecessary spaces toll: %i" % log[4])
-        print("   %s completed!\n" % dirname)
+        print(" -Number of files: {:d} ({:d} excluded)".format(log[0], log[1]))
+        print(" -Number of files changed: {:d}".format(log[2]))
+        print(" -Line breaks toll: {:d}".format(log[3]))
+        print(" -Unnecessary spaces toll: {:d}".format(log[4]))
+        print("  {:d} completed!\n".format(dirname))

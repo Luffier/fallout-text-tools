@@ -18,8 +18,7 @@ except ImportError:
 #target, this is done in a file basis
 def mismatch_finder(base, target):
 
-    output_text = ''
-
+    log = ''
     flag = False
     count_total = len(base)
 
@@ -28,15 +27,18 @@ def mismatch_finder(base, target):
             if base[afile].get(index1) == base[afile].get(index2):
                 if target[afile].get(index1) != target[afile].get(index2):
                     if not flag:
-                        output_text += "\n\n%s{\n" % afile
+                        log += "\n\n{}{\n".format(afile)
                     flag = True
-                    output_text += "\n%8s --> '%s'" % (index1, target[afile].get(index1))
-                    output_text += "\n%8s --> '%s'" % (index2, target[afile].get(index2))
-                    output_text += "\n      EN --> '%s'\n" % (base[afile].get(index1))
+                    log += "\n{:>8} --> ".format(index1)
+                    log += "'{}'".format(target[afile].get(index1))
+                    log += "\n{:>8} --> ".format(index2)
+                    log += "'{}'".format(target[afile].get(index2))
+                    log += "\n{:>8} --> ".format("EN")
+                    log += "'{}'\n".format(base[afile].get(index1))
         if flag:
-            output_text += "\n}"
+            log += "\n}"
         flag = False
-    return output_text
+    return log
 
 
 #similar to mismatch_finder but on a global scale (expect it to be very slow)
@@ -46,8 +48,7 @@ def mismatch_finder(base, target):
 #take around 8 minutes.
 def mismatch_finder_global(base, target):
 
-    output_text = ''
-
+    log = ''
     base_alt = {}
     target_alt = {}
 
@@ -60,10 +61,10 @@ def mismatch_finder_global(base, target):
             base_alt[afile+index] = base[afile][index]
 
     flag = False
-    count_total = factorial(len(base_alt)) // (2 *  factorial(len(base_alt) - 2))
+    count_total = factorial(len(base_alt)) // (2*factorial(len(base_alt) - 2))
     fname_pattern = re.compile(r'[0-9]{3,5}')
     index_pattern = re.compile(r'.*\.MSG', re.I)
-    print("\nTotal pairs: %s\n" % count_total)
+    print("\nTotal pairs: {:d}\n".format(count_total))
 
     for address1, address2 in itertools.combinations(target_alt, 2):
         if base_alt.get(address1) == base_alt.get(address2):
@@ -71,16 +72,19 @@ def mismatch_finder_global(base, target):
                 if not flag:
                     filename1 = fname_pattern.sub('', address1)
                     filename2 = fname_pattern.sub('', address2)
-                    output_text += "\n\n%s / %s\n\n" % (filename1, filename2)
+                    log += "\n\n{} / {}\n\n".format(filename1, filename2)
                 flag = True
                 index1 = index_pattern.sub('', address1)
                 index2 = index_pattern.sub('', address2)
-                output_text += "\n %7s --> '%s'\n" % (index1, target_alt.get(address1))
-                output_text += "\n %7s --> '%s'\n" % (index2, target_alt.get(address2))
-                output_text += "\n      EN --> '%s'\n" % (base_alt.get(address1))
+                log += "\n{:>8} --> ".format(index1)
+                log += "'{}'".format(target_alt[afile].get(index1))
+                log += "\n{:>8} --> ".format(index2)
+                log += "'{}'".format(target_alt[afile].get(index2))
+                log += "\n{:>8} --> ".format("EN")
+                log += "'{}'\n".format(base_alt[afile].get(index1))
         flag = False
 
-    return output_text
+    return log
 
 
 if __name__ == '__main__':
@@ -104,11 +108,13 @@ if __name__ == '__main__':
     base_dict = lazy_town.analyzer(args.base, base_enc, args.clearcache)
 
     if args.normalmode:
-        result = mismatch_finder(base_dict, target_dict)
-        with open('mf_result.txt', 'w', encoding=target_enc) as foutput:
-            foutput.write(result)
+        log = mismatch_finder(base_dict, target_dict)
+        log_filename = 'mf-{}.txt'.format(args.target)
+        with open(log_filename, 'w', encoding=target_enc) as flog:
+            flog.write(result)
 
     if args.globalmode:
-        result = mismatch_finder_global(base_dict, target_dict)
-        with open('mfG_result.txt', 'w', encoding=target_enc) as foutput:
-            foutput.write(result)
+        log = mismatch_finder_global(base_dict, target_dict)
+        log_filename = 'mfG-{}.txt'.format(args.target)
+        with open(log_filename, 'w', encoding=target_enc) as flog:
+            flog.write(result)

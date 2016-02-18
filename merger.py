@@ -78,9 +78,7 @@ for dirname in dirnames:
     enc = encfinder(dirname)
 
     for afile in thefiles:
-
-        par = [enc, None] #parameters = [enconding, errors]
-        lines = alt_read(afile, par)
+        lines = common.open(afile, encoding=enc)
 
         filename = os.path.split(afile)[-1]
 

@@ -45,14 +45,20 @@ def encfinder(dirname):
             break
     return enc
 
-#simple 'open and readlines' but with exceptions handling for either an unknown
-#codec name/alias or a decoding error
-def alt_read(filepath, enc=None, err=None):
+#simple 'open and readlines|write' but with exceptions handling for either an
+#unknown codec name/alias or a decoding error
+def open(filepath, out=None, enc=None):
+    err=None
     while True:
         try:
-            with open(filepath, 'r', encoding=enc, errors=err) as fileout:
+            with open(filepath, 'r', encoding=enc, errors=err) as thefile:
                 try:
-                    lines = fileout.readlines()
+                    if out:
+                        thefile.write(out)
+                    else:
+                        lines = thefile.readlines()
+                        return lines
+
                     break
                 except UnicodeDecodeError:
                     print(filepath)
