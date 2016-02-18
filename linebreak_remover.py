@@ -14,99 +14,100 @@ def linebreak_remover(target, enc = None, excluded = [],
     nfiles = nspaces = nlinebreaks = 0
     isBetweenBrackets = False
 
-    thefiles = common.pathfinder(target, excluded=["lb-output"])
+    files = common.pathfinder(target, excluded=["lb-output"])
     outpath = os.path.join(".", "lb-output", os.path.basename(target))
     try:
         shutil.rmtree(outpath)
     except FileNotFoundError:
         pass
 
-    for afile in thefiles:
+    excluded = [f for f in files if os.path.basename(f).lower() in excluded]
+    files = [f for f in files if f not in excluded]
 
-        filepath = afile.replace(os.path.commonpath((target, afile)), "")
-        foutpath = outpath + filepath
-        filename = os.path.split(afile)[-1]
+    if fullmode:
+        for afile in excluded:
+            foutpath = afile.replace(os.path.commonpath((target, afile)), "")
+            foutpath = outpath + foutpath
+            common.copy(afile, foutpath)
 
-        if filename.lower() in excluded:
-            if fullmode:
-                common.copy(afile, foutpath)
-            continue
-        else:
-            lines = common.alt_read(afile, enc)
-            text_reference = ''.join(lines)
-            text_out = ''
+    for afile in files:
+        foutpath = afile.replace(os.path.commonpath((target, afile)), "")
+        foutpath = outpath + foutpath
+        filename = os.path.basename(afile)
 
-            for line in lines:
-                if ecmode:
-                    #tabs to 4 spaces
-                    line = re.sub(r'\t', '    ', line)
-                    #C like comments to the usual number sign
-                    line = re.sub(r'\/\/', '#', line)
-                    #uncommented text outside brackets
-                    line = re.sub(r'^[ ]*(\{[0-9]+\}\{.*\}\{[^{]*\})[^\}\{\r\n\t#\/ a-zA-Z0-9]+(.*)', r'\1\2', line)
+        lines = common.alt_read(afile, enc)
+        text_reference = ''.join(lines)
+        text_out = ''
 
-                if line.startswith('{'):
-                    isBetweenBrackets = True
-                #not empty for normal -single- lines
-                m1 = re.findall(r'\}[ \t\u3000]*$', line)
-                #not empty for lines with inline dev comments
-                m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line)
-                #not empty for lines with inline dev comments (alt. notation)
-                m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line)
-                #not empty for lines with text outside comments or brackets
-                m4 = re.findall(r'\}[ ]*([^ \{\}\#\/\s])+.*$', line)
+        for line in lines:
+            if ecmode:
+                #tabs to 4 spaces (default in Fallout?)
+                line = re.sub(r'\t', '    ', line)
+                #C like comments to the usual number sign
+                line = re.sub(r'\/\/', '#', line)
+                #uncommented text outside brackets
 
-                #counts the nº of unnecessary spaces/tabs before deleting them
-                spaces = re.findall(r'\}([ \t\u3000]*)$', line)
+            if line.startswith('{'):
+                isBetweenBrackets = True
+            #not empty for normal -single- lines
+            m1 = re.findall(r'\}[ \t\u3000]*$', line)
+            #not empty for lines with inline dev comments
+            m2 = re.findall(r'\}[ \t\u3000]*\#.*$', line)
+            #not empty for lines with inline dev comments (alt. notation)
+            m3 = re.findall(r'\}[ \t\u3000]*\/\/.*$', line)
+            #not empty for lines with text outside comments or brackets
+            m4 = re.findall(r'\}[ ]*([^ \{\}\#\/\s])+.*$', line)
+
+            #counts the number of unnecessary spaces/tabs before deleting them
+            spaces = re.findall(r'\}([ \t\u3000]*)$', line)
+            if spaces:
+                nspaces += len(spaces[0])
+
+            #removes any space after the final closing bracket
+            line = re.sub(r'(\})([ \t\u3000]*)$', r'\1', line)
+
+            #removes any space before the initial bracket
+            line = re.sub(r'^([ \t\u3000]*)(\{)', r'\2', line)
+
+            #line with normal or inline dev comment
+            if line.startswith('#') or m2 or m3:
+                spaces = re.findall(r'([ \t\u3000]*)$', line)
                 if spaces:
                     nspaces += len(spaces[0])
+                line = re.sub(r'([ \t\u3000]*)$', '', line)
+                text_out += line
+                isBetweenBrackets = False
 
-                #removes any space after the final closing bracket
-                line = re.sub(r'(\})([ \t\u3000]*)$', r'\1', line)
+            elif line == '\n' and not isBetweenBrackets:
+                text_out += '\n'
 
-                #removes any space before the initial bracket
-                line = re.sub(r'^([ \t\u3000]*)(\{)', r'\2', line)
+            elif m4:
+                text_out += line
 
-                #line with normal or inline dev comment
-                if line.startswith('#') or m2 or m3:
-                    spaces = re.findall(r'([ \t\u3000]*)$', line)
-                    if spaces:
-                        nspaces += len(spaces[0])
-                    line = re.sub(r'([ \t\u3000]*)$', '', line)
-                    text_out += line
-                    isBetweenBrackets = False
+            #line with an open bracket and a line break (main goal)
+            elif not m1 and isBetweenBrackets:
+                text_out += line.replace('\n', '')
+                nlinebreaks += 1
 
-                elif line == '\n' and not isBetweenBrackets:
-                    text_out += '\n'
+            #write if it doesn't fit the above categories
+            else:
+                text_out += line
+                isBetweenBrackets = False
 
-                elif m4:
-                    text_out += line
+        if text_out != text_reference:
+            nfiles += 1
+            while True:
+                try:
+                    with open(foutpath, 'w', encoding=enc) as fileout:
+                        fileout.write(text_out)
+                except FileNotFoundError:
+                    os.makedirs(os.path.dirname(foutpath), exist_ok=True)
+                    continue
+                break
+        elif fullmode:
+            common.copy(afile, foutpath)
 
-                #line with an open bracket and a line break (main goal)
-                elif not m1 and isBetweenBrackets:
-                    text_out += line.replace('\n', '')
-                    nlinebreaks += 1
-
-                #write if it doesn't fit the above categories
-                else:
-                    text_out += line
-                    isBetweenBrackets = False
-
-            if text_out != text_reference:
-                nfiles += 1
-                while True:
-                    try:
-                        with open(foutpath, 'w', encoding=enc) as fileout:
-                            fileout.write(text_out)
-                    except FileNotFoundError:
-                        os.makedirs(os.path.dirname(foutpath), exist_ok=True)
-                        continue
-                    break
-
-            elif fullmode:
-                common.copy(afile, foutpath)
-
-    return (len(thefiles), len(excluded), nfiles, nlinebreaks, nspaces)
+    return (len(files), len(excluded), nfiles, nlinebreaks, nspaces)
 
 
 if __name__ == '__main__':
