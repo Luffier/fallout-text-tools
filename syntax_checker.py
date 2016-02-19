@@ -17,7 +17,7 @@ def syntax_checker(files, enc, fullmode=False):
     for afile in files:
         flag = False
 
-        lines = common.open(afile, encoding=enc)
+        lines = common.open2(afile, encoding=enc)
 
         if fullmode:
             reference = lines

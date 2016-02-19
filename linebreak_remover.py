@@ -35,7 +35,7 @@ def linebreak_remover(target, enc = None, excluded = [],
         foutpath = outpath + foutpath
         filename = os.path.basename(afile)
 
-        lines = common.open(afile, encoding=enc)
+        lines = common.open2(afile, encoding=enc)
         text_reference = ''.join(lines)
         text_out = ''
 

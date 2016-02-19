@@ -1,6 +1,6 @@
 """Checks for duplicates in the index numbers (which means content being
-override and unused). The results will be saved into text file. The script
-doesn't take into account index numbers inside dev comments."""
+override and not used). The results will be saved into a text file.
+The script doesn't take into account index numbers inside dev comments."""
 import os, re, sys, argparse
 import common
 
@@ -10,7 +10,7 @@ def duplicate_checker(files, enc):
     log = ''
     for afile in files:
 
-        lines = common.open(afile, encoding=enc)
+        lines = common.open2(afile, encoding=enc)
         #remove dev comments and others
         lines = [l for l in lines if not l.startswith('#')]
         lines = [l for l in lines if l.startswith('{')]

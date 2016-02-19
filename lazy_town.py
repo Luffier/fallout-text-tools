@@ -31,7 +31,7 @@ def analyzer(directory, enc=None, clearcache=False):
             filename = os.path.split(afile)[-1]
             data[filename] = {}
 
-            lines = common.open(afile, encoding=enc)
+            lines = common.open2(afile, encoding=enc)
 
             for line in lines:
                 if line.startswith('{'):
@@ -125,7 +125,7 @@ def injector(loc, directory, enc=None):
 
         filename = os.path.split(afile)[-1]
 
-        lines = common.open(afile, encoding=enc)
+        lines = common.open2(afile, encoding=enc)
 
         for line in lines:
 
@@ -147,7 +147,7 @@ def injector(loc, directory, enc=None):
             else:
                 text_out += line
 
-        common.open(afile, out=text_out, encoding=target_enc, errors=err)
+        common.open2(afile, out=text_out, encoding=target_enc, errors=err)
 
 
 if __name__ == '__main__':

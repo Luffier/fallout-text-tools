@@ -28,7 +28,7 @@ def pathfinder(target='.', excluded=[]):
 #returns the encoding of a given folder name based on a dictionary of known
 #languages keywords and their respective encoding (not guessing involved)
 def encfinder(dirname):
-    enc = None
+    encoding = None
     codec_dic = {
     'cp1252': ['english', 'english_fixt', 'french', 'german', 'italian',
                'spanish', 'spanish_female', 'spanish_male'],
@@ -41,17 +41,17 @@ def encfinder(dirname):
 
     for codec, lang_keyword in codec_dic.items():
         if dirname.lower() in lang_keyword:
-            enc = codec
+            encoding = codec
             break
-    return enc
+    return encoding
 
 #simple 'open and readlines|write' but with exceptions handling for either an
 #unknown codec name/alias or a decoding error
-def open(filepath, out=None, enc=None):
+def open2(filepath, out=None, encoding=None):
     err=None
     while True:
         try:
-            with open(filepath, 'r', encoding=enc, errors=err) as thefile:
+            with open(filepath, 'r', encoding=encoding, errors=err) as thefile:
                 try:
                     if out:
                         thefile.write(out)
@@ -63,13 +63,13 @@ def open(filepath, out=None, enc=None):
                 except UnicodeDecodeError:
                     print(filepath)
                     print(" ---> Decoding error (%s) (ignoring for now; \
-                          information will be lost)" % enc)
+                          information will be lost)" % encoding)
                     err = 'ignore'
         except LookupError:
             print(filepath)
-            enc = input(" ---> Unknown codec. Type a supported codec: ")
-            if not enc:
-                enc = None
+            encoding = input(" ---> Unknown codec. Type a supported codec: ")
+            if not encoding:
+                encoding = None
     return lines
 
 #for copying files and creating dirs as needed
