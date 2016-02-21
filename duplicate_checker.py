@@ -2,32 +2,27 @@
 override and not used). The results will be saved into a text file.
 The script doesn't take into account index numbers inside dev comments."""
 import os, re, sys, argparse
+from itertools import groupby
 import common
 
 
-def duplicate_checker(files, enc):
-
+def duplicate_checker(filepaths, encoding):
     log = ''
-    for afile in files:
-
-        lines = common.open2(afile, encoding=enc)
-        #remove dev comments and others
-        lines = [l for l in lines if not l.startswith('#')]
-        lines = [l for l in lines if l.startswith('{')]
-
-        indices = [re.findall(r'^[ ]*\{([0-9]+)\}', l)[0] for l in lines]
-        indices = [int(i) for i in indices]
-
-        #fills matches if there's any duplicate and records it
-        matches = [i for i in indices if indices.count(i) > 1]
-        if matches:
-            log += afile
-            matches.sort()
-            while matches:
+    for filepath in filepaths:
+        lines = common.open2(filepath, encoding)
+        #gets the indices (expects a correct syntax, aside from spaces
+        #at the beginning of the line)
+        indices = [re.findall(r'^[ ]*\{([0-9]+)\}', l) for l in lines]
+        indices = [int(i[0]) for i in indices if i]
+        indices.sort()
+        #groups indices and their count number; keeps duplicates only
+        dupes = [(i, len(list(g))) for i, g in groupby(indices)]
+        dupes = [(i, l) for (i, l) in dupes if l > 1]
+        if dupes:
+            log += filepath
+            for dupe in dupes:
                 log += "\n       This file has the "
-                log += "index number {:d} ".format(matches[0])
-                log += "repeated {:d} times!".format(matches.count(matches[0]))
-                matches[:] = [m for m in matches if m != matches[0]]
+                log += "index number {:d} repeated {:d} times!".format(*dupe)
             log += "\n\n"
 
     return log
@@ -42,7 +37,6 @@ if __name__ == '__main__':
                      contain the localization folders you want to check")
     args = par.parse_args()
 
-
     path = os.path.abspath(args.target)
     if not args.recursive:
         dirnames = [os.path.basename(path)]
@@ -50,12 +44,12 @@ if __name__ == '__main__':
         dirnames = common.listdirs(path)
 
     for dirname in dirnames:
-        other_dirs = [d for d in dirnames if d is not dirname]
-        thefiles = common.pathfinder(path, excluded=other_dirs)
+        other_dirnames = [d for d in dirnames if d is not dirname]
+        filepaths = common.pathfinder(path, excluded=other_dirnames)
         enc = common.encfinder(dirname)
 
         print("\n+ Working with {} ({})...".format(dirname, enc))
-        log = duplicate_checker(thefiles, enc)
+        log = duplicate_checker(filepaths, enc)
 
         if log:
             with open('dc-{}.txt'.format(dirname), 'w', encoding=enc) as flog:
