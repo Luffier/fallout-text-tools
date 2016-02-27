@@ -9,24 +9,30 @@ import os, re, sys, shutil, argparse
 import common
 try:
     import Levenshtein
-    ratio = lambda x, y: Levenshtein.ratio(x, y)
+    def ratio(string1, string2):
+        return Levenshtein.ratio(string1, string2)
 except ImportError:
     import difflib
-    ratio = lambda x, y: difflib.SequenceMatcher(None, x, y).ratio()
-    print("python-Levenshtein module not found, using difflib instead")
+    def ratio(string1, string2):
+        return difflib.SequenceMatcher(None, string1, string2).ratio()
+    print("* python-Levenshtein module not found, using difflib instead *\n")
 try:
     import ujson
 except ImportError:
     import json
-    print("ujson module not found, using json instead")
+    print("* ujson module not found, using json instead *\n")
 
 
 #makes a dictionary with the content of .msg files found in a given dirpath
 #dictionary structure: {'filename': {'index': 'line content'}}
 def analyzer(dirpath, encoding=None, clearcache=False):
 
+    cachepath = os.path.join('.', 'ftt-cache')
+    os.makedirs(cachepath, exist_ok=True)
     dirname = os.path.basename(dirpath)
-    if not os.path.isfile('{}.json'.format(dirname)) or clearcache:
+    cachepath = os.path.join(cachepath, '{}.json'.format(dirname))
+
+    if not os.path.isfile(cachepath) or clearcache:
         line_p = re.compile(r'^[^\S\n]*\{([0-9]+)\}\{(?:.*)\}\{([^{]*)\}')
         startsWithBracket_p = re.compile(r'^[^\S\n]*\{')
 
@@ -48,14 +54,15 @@ def analyzer(dirpath, encoding=None, clearcache=False):
                         print("{:<7d}'{}'".format(lines.index(line), filepath))
                         sys.exit("Aborting...")
 
-        with open('{}.json'.format(dirname), 'w') as cacheout:
+        with open(cachepath, 'w') as cacheout:
             try:
                 ujson.dump(data, cacheout)
             except NameError:
                 json.dump(data, cacheout)
 
     else:
-        with open('{}.json'.format(dirname), 'r') as cachein:
+        print("Using cached localization data ({})".format(dirname))
+        with open(cachepath, 'r') as cachein:
             try:
                 data = ujson.load(cachein)
             except NameError:
