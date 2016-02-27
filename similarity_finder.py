@@ -37,7 +37,8 @@ def similarity_finder(loc, thd=0.9):
         sys.stdout.flush()
     print("Lines above the threshold: {:d}".format(above_thd))
     print("Lines below the threshold: {:d}".format(below_thd))
-    return log
+
+    return log[2:]
 
 
 if __name__ == '__main__':

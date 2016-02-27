@@ -77,8 +77,8 @@ if __name__ == '__main__':
     target_enc = common.encfinder(args.target)
     base_enc = common.encfinder(args.base)
 
-    target_dict = lazy_town.analyzer(args.target, target_enc, args.clearcache)
-    base_dict = lazy_town.analyzer(args.base, base_enc, args.clearcache)
+    target_lang = lazy_town.analyzer(args.target, target_enc, args.clearcache)
+    base_lang = lazy_town.analyzer(args.base, base_enc, args.clearcache)
 
     cachepath = os.path.join('.', 'ftt-cache')
     os.makedirs(cachepath, exist_ok=True)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
                 log = json.load(cachein)
     else:
         print("\nWORKING...")
-        log = mismatch_finder(base_dict, target_dict)
+        log = mismatch_finder(base_lang, target_lang)
         with open(cachepath, 'w', encoding=target_enc) as cacheout:
             try:
                 ujson.dump(log, cacheout)

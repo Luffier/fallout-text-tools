@@ -69,13 +69,12 @@ def analyzer(dirpath, encoding=None, clearcache=False):
                 data = json.load(cachein)
     return data
 
-
 #base => English files used during the localization process
 #newbase => current English files
 #target => localization files
 #merges newbase and target by comparing base and newbase, if the two lines have
 #a similarity ratio higher than the threshold value, the target content is used
-def comparator(base, newbase, target, thd=0.9):
+def comparator(base, newbase, target, thd=1):
     above_thd = 0
     below_thd = 0
     not_found = 0
@@ -115,10 +114,9 @@ def comparator(base, newbase, target, thd=0.9):
 
     return newtarget
 
-
 #copies the dictionary's content into the .msg files inside dirpath
 #this way we can keep comments and structure
-def injector(loc, dirpath, encoding=None):
+def injector(lang, dirpath, encoding=None):
 
     line_p = re.compile(r'^[^\S\n]*\{([0-9]+)\}\{(?:.*)\}\{([^{]*)\}')
     startsWithBracket_p = re.compile(r'^[^\S\n]*\{')
@@ -134,11 +132,11 @@ def injector(loc, dirpath, encoding=None):
         for line in lines:
             if startsWithBracket_p.search(line):
                 line_content = line_p.search(line)
-                index = content.group(1)
-                if (index in loc[filename]) and content.group(2):
-                    line = line[:line_content.start(2)] + \
-                           loc[filename][index] + \
-                           line[line_content.end(2):]
+                index = line_content.group(1)
+                if (index in lang[filename]) and line_content.group(2):
+                    line = (line[:line_content.start(2)] +
+                            lang[filename][index]         +
+                            line[line_content.end(2):])
                 text_out += line
             else:
                 text_out += line
@@ -175,15 +173,15 @@ if __name__ == '__main__':
 
     print("\n\nWORKING...\n\n")
 
-    base_loc = analyzer(args.base, base_enc, args.clearcache)
-    base_loc_new = analyzer(args.newbase, base_enc, args.clearcache)
-    target_loc = analyzer(args.target, target_enc, args.clearcache)
+    base_lang = analyzer(args.base, base_enc, args.clearcache)
+    base_lang_new = analyzer(args.newbase, base_enc, args.clearcache)
+    target_lang = analyzer(args.target, target_enc, args.clearcache)
 
-    target_loc_new = comparator(base_loc, base_loc_new,
-                                target_loc, args.threshold)
+    target_lang_new = comparator(base_lang, base_lang_new,
+                                target_lang, args.threshold)
 
     shutil.copytree(args.newbase, output_path)
-    injector(target_loc_new, output_path, base_enc)
+    injector(target_lang_new, output_path, base_enc)
 
     print("\n\nALL DONE!\n\n")
     sys.exit()

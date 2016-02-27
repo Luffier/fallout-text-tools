@@ -52,14 +52,15 @@ def syntax_checker(filepaths, encoding):
 
 if __name__ == '__main__':
 
-    help_msg = (146 * "*" +
-    """\n Less tran 3 pairs of brackets: line break inside \
-    brackets (false positive), dev comment without number sign (ugly) or \
-    missing bracket/s (crash!)\n More than 3 pairs of brackets: inline dev \
-    comment with brackets inside, 2 lines in one (not fatal but ugly) or a \
-    'lost' set of brackets (crash!)\n Non-numeric character on index \
-    setion: possibly a typo or a weird bracket configuration (crash!)\n""" +
-    146 * "*" + "\n\n\n")
+    help_msg = (146 * "*"                                                     +
+    "\n Less tran 3 pairs of brackets: line break inside brackets (false "    +
+    "positive), dev comment without number sign (ugly) or missing bracket/s " +
+    "(crash!) \n More than 3 pairs of brackets: inline dev comment with "     +
+    "brackets inside, 2 lines in one (not fatal but ugly) or a 'lost' set "   +
+    "of brackets (crash!)\n Non-numeric character on index setion: possibly " +
+    "a typo or a weird bracket configuration (crash!)\n"                      +
+    146 * "*"                                                                 +
+    "\n\n\n")
 
     par = argparse.ArgumentParser(description=syntax_checker.__doc__)
     par.add_argument("target", help="Target folder")
