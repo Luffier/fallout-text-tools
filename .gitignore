@@ -54,7 +54,11 @@ docs/_build/
 
 # Testing
 test.py
+editor.py
+data.py
+*2.py
 *.msg
 *.txt
 *.sve
 *.json
+*.tmp
