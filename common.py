@@ -1,5 +1,5 @@
 import os, sys, shutil, fnmatch
-
+from os.path import basename
 
 #returns a list of the folder names in the target path minus excluded and
 #folders with no .msg files down the directory tree
@@ -30,49 +30,54 @@ def pathfinder(path='.', excluded=[], file_filter='*.msg'):
 #languages keywords and their respective encoding (not guessing involved)
 def encfinder(dirname):
     encoding = None
-    codec_dic = {
+    codec_lib = {
     'cp1252' : ['english', 'english_base', 'english_fixt', 'french', 'german',
-                'italian','spanish', 'spanish_female', 'spanish_male'],
+                'italian','spanish_base', 'spanish_female', 'spanish_male'],
     'latin2' : ['hungarian'],
     'cp866'  : ['russian_fargus'],
     'cp1251' : ['russian_1c'],
     'cp1250' : ['czech', 'polish'],
     'gb18030': ['chinese']}
-    for codec, lang_keyword in codec_dic.items():
+    for codec, lang_keyword in codec_lib.items():
         if dirname.lower() in lang_keyword:
             encoding = codec
             break
+
+    if not encoding:
+        print("Couldn't find the codec for {}".format(dirname))
+        encoding = input("Type a supported codec "
+                         "(nothing for your system's default): ")
+        if not encoding:
+            encoding = None
     return encoding
 
-#simple 'open and readlines|write' but with exceptions handling for either an
-#unknown codec name/alias or a decoding error
-def open2(path, encoding=None, output=None):
+#simple 'open and readlines' but with exception handling for decoding errors
+def readlines(path, encoding):
     errors=None
-    if output:
-        mode = 'w'
-    else:
-        mode = 'r'
     while True:
-        try:
-            with open(path, mode, encoding=encoding, errors=errors) as thefile:
-                try:
-                    if output:
-                        thefile.write(output)
-                        break
-                    else:
-                        lines = thefile.readlines()
-                        return lines
-                except UnicodeDecodeError:
-                    print(path)
-                    print(" ---> Decoding error ({}) (ignoring for now; \
-                          information will be lost)".format(encoding))
-                    errors = 'ignore'
-        except LookupError:
-            print(path)
-            encoding = input(" ---> Unknown codec. Type a supported codec \
-                             (nothing for your system's default): ")
-            if not encoding:
-                encoding = None
+        with open(path, 'r', encoding=encoding, errors=errors) as thefile:
+            try:
+                lines = thefile.readlines()
+                return lines
+            except UnicodeDecodeError:
+                print("Decoding error in {} ({}) (ignoring; information will "
+                      "be lost)".format(basename(path), encoding))
+                print("Fullpath: {}".format(path))
+                errors = 'ignore'
+
+#simple 'open and write' but with exception handling for encoding errors
+def writelines(path, encoding, output):
+    errors=None
+    while True:
+        with open(path, 'w', encoding=encoding, errors=errors) as thefile:
+            try:
+                thefile.write(output)
+                break
+            except UnicodeEncodeError:
+                print("Encoding error in {} ({}) (ignoring; information will "
+                      "be lost)".format(basename(path), encoding))
+                print("Fullpath: {}".format(path))
+                errors = 'ignore'
 
 #for copying files and creating dirs as needed
 def copy(source, target):

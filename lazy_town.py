@@ -22,6 +22,7 @@ except ImportError:
     import json
     print("* ujson module not found, using json instead *\n")
 
+line_p = re.compile(r'^[^\S\n]*\{([0-9]+)\}\{(?:.*)\}\{([^{]*)\}')
 
 #makes a dictionary with the content of .msg files found in a given dirpath
 #dictionary structure: {'filename': {'index': 'line content'}}
@@ -33,22 +34,19 @@ def analyzer(dirpath, encoding=None, clearcache=False):
     cachepath = os.path.join(cachepath, '{}.json'.format(dirname))
 
     if not os.path.isfile(cachepath) or clearcache:
-        line_p = re.compile(r'^[^\S\n]*\{([0-9]+)\}\{(?:.*)\}\{([^{]*)\}')
-        startsWithBracket_p = re.compile(r'^[^\S\n]*\{')
-
         data = {}
         filepaths = common.pathfinder(dirpath)
 
         for filepath in filepaths:
             filename = os.path.split(filepath)[-1]
             data[filename] = {}
-            lines = common.open2(filepath, encoding)
+            lines = common.readlines(filepath, encoding)
             for line in lines:
-                if startsWithBracket_p.search(line):
-                    line_content = line_p.findall(line)[0]
+                if line_p.search(line):
+                    line_sections = line_p.findall(line)[0]
                     try:
-                        index = line_content[0]
-                        data[filename][index] = line_content[1]
+                        index = line_sections[0]
+                        data[filename][index] = line_sections[1]
                     except IndexError:
                         print("There are syntax errors in:")
                         print("{:<7d}'{}'".format(lines.index(line), filepath))
@@ -61,7 +59,7 @@ def analyzer(dirpath, encoding=None, clearcache=False):
                 json.dump(data, cacheout)
 
     else:
-        print("Using cached localization data ({})".format(dirname))
+        print("Using cached language data ({})".format(dirname))
         with open(cachepath, 'r') as cachein:
             try:
                 data = ujson.load(cachein)
@@ -70,30 +68,30 @@ def analyzer(dirpath, encoding=None, clearcache=False):
     return data
 
 #base => English files used during the localization process
-#newbase => current English files
+#base2 => current English files
 #target => localization files
-#merges newbase and target by comparing base and newbase, if the two lines have
+#merges base2 and target by comparing base and base2, if the two lines have
 #a similarity ratio higher than the threshold value, the target content is used
-def comparator(base, newbase, target, thd=1):
+def comparator(base, base2, target, thd=1):
     above_thd = 0
     below_thd = 0
     not_found = 0
     missing_files = 0
     log = ""
 
-    newtarget = newbase
+    target2 = base2
 
     for afile in base: #for every filename in base (original files)
-        #only if it exists in newbase and target (Fixt/loc files)
-        if newbase.get(afile) and target.get(afile):
+        #only if it exists in base2 and target (Fixt/loc files)
+        if base2.get(afile) and target.get(afile):
             for index in base[afile]: #for every index in filename
-                if newbase[afile].get(index): #only if line exists in Fixt
+                if base2[afile].get(index): #only if line exists in Fixt
                     #if the dif. ratio between the two is above the thd
-                    if ratio(base[afile][index], newbase[afile][index]) >= thd:
+                    if ratio(base[afile][index], base2[afile][index]) >= thd:
                         #and the localization is complete
                         if target[afile].get(index):
                             #the old content is copied (main goal)
-                            newtarget[afile][index] = target[afile][index]
+                            target2[afile][index] = target[afile][index]
                             above_thd += 1
                         else:
                             log += "Content not found in target: "
@@ -112,36 +110,33 @@ def comparator(base, newbase, target, thd=1):
     with open('lt-log.txt', 'w') as flog:
         flog.write(log)
 
-    return newtarget
+    return target2
 
 #copies the dictionary's content into the .msg files inside dirpath
 #this way we can keep comments and structure
-def injector(lang, dirpath, encoding=None):
+def injector(lang, dirpath, encoding):
 
-    line_p = re.compile(r'^[^\S\n]*\{([0-9]+)\}\{(?:.*)\}\{([^{]*)\}')
-    startsWithBracket_p = re.compile(r'^[^\S\n]*\{')
-
-    dirname = os.path.basename(dirpath)
+    dirname = os.path.basename(dirpath)[:-4]
     filepaths = common.pathfinder(dirpath)
     target_enc = common.encfinder(dirname)
 
     for filepath in filepaths:
         text_out = ''
         filename = os.path.split(filepath)[-1]
-        lines = common.open2(filepath, encoding)
+        lines = common.readlines(filepath, encoding)
         for line in lines:
-            if startsWithBracket_p.search(line):
-                line_content = line_p.search(line)
-                index = line_content.group(1)
-                if (index in lang[filename]) and line_content.group(2):
-                    line = (line[:line_content.start(2)] +
+            if line_p.search(line):
+                line_sections = line_p.search(line)
+                index = line_sections.group(1)
+                if (index in lang[filename]) and line_sections.group(2):
+                    line = (line[:line_sections.start(2)] +
                             lang[filename][index]         +
-                            line[line_content.end(2):])
+                            line[line_sections.end(2):])
                 text_out += line
             else:
                 text_out += line
 
-        common.open2(filepath, target_enc, output=text_out)
+        common.writelines(filepath, target_enc, text_out)
 
 
 if __name__ == '__main__':
@@ -150,7 +145,7 @@ if __name__ == '__main__':
     par.add_argument("base", default="ENGLISH_BASE",
                      help="English files used during the \
                      localization process (folder name)")
-    par.add_argument("newbase", default="ENGLISH_FIXT",
+    par.add_argument("base2", default="ENGLISH_FIXT",
                      help="Current English files (folder name)")
     par.add_argument("target", help="Target files (folder name)")
     par.add_argument("-t", "--threshold", type=float, default=1,
@@ -159,29 +154,29 @@ if __name__ == '__main__':
                      help="Clears json cache files")
     args = par.parse_args()
 
-    for folder in (args.base, args.newbase):
-        if not os.path.isdir(folder):
-            sys.exit("\n{} folder missing. Aborting...".format(folder))
+    for dirpath in (args.base, args.base2):
+        dirname = os.path.basename(dirpath)
+        if not os.path.isdir(dirname):
+            sys.exit("\n{} folder missing. Aborting.".format(dirname))
 
-    target_new = args.target + '_NEW'
-    if os.path.isdir(target_new):
-        shutil.rmtree(target_new)
+    target2_path =  os.path.join('.', args.target + '_NEW')
+    if os.path.isdir(target2_path):
+        shutil.rmtree(target2_path)
 
     base_enc = common.encfinder(args.base)
     target_enc = common.encfinder(args.target)
-    output_path = os.path.join('.', target_new)
 
     print("\n\nWORKING...\n\n")
 
     base_lang = analyzer(args.base, base_enc, args.clearcache)
-    base_lang_new = analyzer(args.newbase, base_enc, args.clearcache)
+    base2_lang = analyzer(args.base2, base_enc, args.clearcache)
     target_lang = analyzer(args.target, target_enc, args.clearcache)
 
-    target_lang_new = comparator(base_lang, base_lang_new,
-                                target_lang, args.threshold)
+    target2_lang = comparator(base_lang, base2_lang, target_lang,
+                                 args.threshold)
 
-    shutil.copytree(args.newbase, output_path)
-    injector(target_lang_new, output_path, base_enc)
+    shutil.copytree(args.base2, target2_path)
+    injector(target2_lang, target2_path, base_enc)
 
     print("\n\nALL DONE!\n\n")
     sys.exit()

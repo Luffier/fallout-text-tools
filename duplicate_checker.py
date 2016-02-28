@@ -9,7 +9,7 @@ import common
 def duplicate_checker(filepaths, encoding):
     log = ''
     for filepath in filepaths:
-        lines = common.open2(filepath, encoding)
+        lines = common.readlines(filepath, encoding)
         #gets the indices (expects a correct syntax, aside from spaces
         #at the beginning of the line)
         indices = [re.findall(r'^[ ]*\{([0-9]+)\}', l) for l in lines]

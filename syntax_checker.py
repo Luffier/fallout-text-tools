@@ -20,7 +20,7 @@ def syntax_checker(filepaths, encoding):
 
     for filepath in filepaths:
         flag = False #for delimiting files in the log text
-        lines = common.open2(filepath, encoding)
+        lines = common.readlines(filepath, encoding)
         lines = [(n, l) for (n, l) in enumerate(lines, start=1)]
         lines = [(n, l) for (n, l) in lines if not unwanted_lines_p.search(l)]
 

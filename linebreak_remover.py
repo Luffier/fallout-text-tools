@@ -36,7 +36,7 @@ def linebreak_remover(target, encoding = None, excluded = [],
 
     for filepath in filepaths:
         filename = basename(filepath)
-        lines = common.open2(filepath, encoding)
+        lines = common.readlines(filepath, encoding)
         text_reference = ''.join(lines)
         text_out = ''
         startsWithBracket = False
