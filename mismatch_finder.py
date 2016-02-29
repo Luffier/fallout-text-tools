@@ -6,7 +6,7 @@ from math import factorial as fact
 from itertools import combinations
 import common, lazy_town
 try:
-    import ujson
+    import ujson as json
 except ImportError:
     import json
     print("* ujson module not found, using json instead *\n")
@@ -32,12 +32,12 @@ def mismatch_finder(base, target):
     #with the following structure: {"filename||index": "line_eng"}
     for afile in target:
         for index in target[afile]:
-            target_alt[afile[:-4]+"||"+index] = target[afile][index]
+            target_alt[afile[:-4]+"|"+index] = target[afile][index]
     for afile in base:
         for index in base[afile]:
-            base_alt[afile[:-4]+"||"+index] = base[afile][index]
+            base_alt[afile[:-4]+"|"+index] = base[afile][index]
 
-    identifier_p = re.compile(r'^(.+)\|\|([0-9]+)$')
+    identifier_p = re.compile(r'^(.+)\|([0-9]+)$')
 
     #log structure: {"line_eng": {"line_loc": {"filename": [index]}}}
     mflags = 0
@@ -88,18 +88,12 @@ if __name__ == '__main__':
     if os.path.isfile(cachepath) and not args.clearcache:
         print("Using cached global log ({}@@{})".format(*dirnames))
         with open(cachepath, 'r', encoding=target_enc) as cachein:
-            try:
-                log = ujson.load(cachein)
-            except NameError:
-                log = json.load(cachein)
+            log = json.load(cachein)
     else:
         print("\nWORKING...")
         log = mismatch_finder(base_lang, target_lang)
         with open(cachepath, 'w', encoding=target_enc) as cacheout:
-            try:
-                ujson.dump(log, cacheout)
-            except NameError:
-                json.dump(log, cacheout)
+            json.dump(log, cacheout)
 
     for comment in log["_stats_"]:
         print(comment)
@@ -123,7 +117,4 @@ if __name__ == '__main__':
 
     with open('mf-{}.json'.format(args.target),
               'w', encoding=target_enc) as flog:
-        try:
-            ujson.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)
-        except NameError:
-            json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)
+        json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)

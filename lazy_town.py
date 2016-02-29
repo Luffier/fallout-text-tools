@@ -17,7 +17,7 @@ except ImportError:
         return difflib.SequenceMatcher(None, string1, string2).ratio()
     print("* python-Levenshtein module not found, using difflib instead *\n")
 try:
-    import ujson
+    import ujson as json
 except ImportError:
     import json
     print("* ujson module not found, using json instead *\n")
@@ -53,18 +53,12 @@ def analyzer(dirpath, encoding=None, clearcache=False):
                         sys.exit("Aborting...")
 
         with open(cachepath, 'w') as cacheout:
-            try:
-                ujson.dump(data, cacheout)
-            except NameError:
-                json.dump(data, cacheout)
+            json.dump(data, cacheout)
 
     else:
         print("Using cached language data ({})".format(dirname))
         with open(cachepath, 'r') as cachein:
-            try:
-                data = ujson.load(cachein)
-            except NameError:
-                data = json.load(cachein)
+            data = json.load(cachein)
     return data
 
 #base => English files used during the localization process
