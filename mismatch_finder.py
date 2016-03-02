@@ -1,66 +1,55 @@
 """For checking when two lines that are the same in the English files aren't in
 the target language, helpfull for spoting inaccuracies and mantain a consistent
 localization. The results use the JSON format (formatted for readability)."""
-import os, re, sys, argparse
+import os, sys, argparse
 from math import factorial as fact
 from itertools import combinations
-import common, lazy_town
+from os.path import join, isfile, abspath
+import common
+from lang import Lang
 try:
     import ujson as json
 except ImportError:
     import json
-    print("* ujson module not found, using json instead *\n")
+    print("** ujson module not found, using json instead **\n")
+
 
 #checks when two lines that are the same in the English files aren't in the
-#target language. It compares every line with the rest, across all files,
-#meaning that with 42.116 lines (Fixt 0.81) there's a total of 886.857.670
-#pairs (without repetitions) to compare, at 1.880.000 lines per second (avarage
-#in my computer) it takes around 8 minutes.
+#target language. It compares every line with the rest, across all files.
+#With 42.116 lines (Fixt 0.81) there's a total of 886.857.670 pairs (without
+#repetitions) to compare.
 def mismatch_finder(base, target):
-    log = {"_stats_": []}
-    base_alt = {}
-    target_alt = {}
+
     #the indices in PIPBOY.MSG are dynamic (currently using this feature in the
     #SPANISH localization). It would raise a KeyError exception when it tries
     #to use those unique PIPBOY addresses in the Fixt dict.
-    if target.get("PIPBOY.MSG") and base.get("PIPBOY.MSG"):
-        for index in list(target["PIPBOY.MSG"]):
-            if not base["PIPBOY.MSG"].get(index):
-                target["PIPBOY.MSG"].pop(index)
-    #transform the usual nested dict into a new dict with all the lines,
-    #combining filename and index as the unique identifier of that line_eng
-    #with the following structure: {"filename||index": "line_eng"}
-    for afile in target:
-        for index in target[afile]:
-            target_alt[afile[:-4]+"|"+index] = target[afile][index]
-    for afile in base:
-        for index in base[afile]:
-            base_alt[afile[:-4]+"|"+index] = base[afile][index]
+    target.purge_with(base)
+    target.purge_with(base, limiter=['pipboy'])
 
-    identifier_p = re.compile(r'^(.+)\|([0-9]+)$')
+    base_global = base.global_parser()
+    target_global = target.global_parser()
 
     #log structure: {"line_eng": {"line_loc": {"filename": [index]}}}
-    mflags = 0
-    for addr1, addr2 in combinations(target_alt, 2):
-        if base_alt.get(addr1) == base_alt.get(addr2):
-            line_eng = base_alt[addr1]
-            if target_alt[addr1] != target_alt[addr2]:
-                for addr in (addr1, addr2):
-                    line_loc = target_alt[addr]
-                    filename, index = identifier_p.search(addr).groups()
+    log = {}
+    flags = 0
+    for address1, address2 in combinations(target_global, 2):
+        if base_global.get(address1) == base_global.get(address2):
+            if target_global[address1] != target_global[address2]:
+                line_eng = base_global[address1]
+                for address in (address1, address2):
+                    line_loc = target_global[address]
+                    filename, index = Lang.id_pattern.search(address).groups()
                     log.setdefault(line_eng, {})
                     log[line_eng].setdefault(line_loc, {})
                     log[line_eng][line_loc].setdefault(filename, [])
                     if index not in log[line_eng][line_loc][filename]:
                         log[line_eng][line_loc][filename].append(index)
-                        mflags += 1
+                        flags += 1
 
-    total_pairs = fact(len(target_alt)) // (2*fact(len(target_alt) - 2))
-    total_lines = len(target_alt)
-    mlines = len(log) - 1
-    log["_stats_"].append("Lines:   {}".format(total_lines))
-    log["_stats_"].append("Pairs:   {}".format(total_pairs))
-    log["_stats_"].append("Matches: {} (from {} lines)".format(mflags, mlines))
+    line_count = len(target_global)
+    log["_flags_"] = flags
+    log["_pairs_"] = fact(line_count) // (2*fact(line_count-2))
+    log["_lines_"] = line_count
 
     return log
 
@@ -68,38 +57,39 @@ def mismatch_finder(base, target):
 if __name__ == '__main__':
 
     par = argparse.ArgumentParser(description=__doc__)
-    par.add_argument("base", help="ENGLISH text folder")
-    par.add_argument("target", help="Target localization folder")
+    par.add_argument("base", help="ENGLISH text files")
+    par.add_argument("target", help="Target localization files")
     par.add_argument("-c", "--clearcache", action="store_true",
                      help="Clears json cache files")
+    par.add_argument("-v", "--verbosity", action="store_true",
+                     help="Nifty stats")
     args = par.parse_args()
 
-    target_enc = common.encfinder(args.target)
-    base_enc = common.encfinder(args.base)
+    base = Lang(abspath(args.base), args.clearcache)
+    target = Lang(abspath(args.target), args.clearcache)
 
-    target_lang = lazy_town.analyzer(args.target, target_enc, args.clearcache)
-    base_lang = lazy_town.analyzer(args.base, base_enc, args.clearcache)
+    os.makedirs(Lang.cacheroot, exist_ok=True)
+    dirnames = (base.dirname, target.dirname)
+    cachepath = join(Lang.cacheroot, '{}@@{}.json'.format(*dirnames))
 
-    cachepath = os.path.join('.', 'ftt-cache')
-    os.makedirs(cachepath, exist_ok=True)
-    dirnames = [os.path.basename(d) for d in (args.base, args.target)]
-    cachepath = os.path.join(cachepath, '{}@@{}.json'.format(*dirnames))
-
-    if os.path.isfile(cachepath) and not args.clearcache:
+    if isfile(cachepath) and not args.clearcache:
         print("Using cached global log ({}@@{})".format(*dirnames))
-        with open(cachepath, 'r', encoding=target_enc) as cachein:
+        with open(cachepath, 'r', encoding=target.encoding) as cachein:
             log = json.load(cachein)
     else:
         print("\nWORKING...")
-        log = mismatch_finder(base_lang, target_lang)
-        with open(cachepath, 'w', encoding=target_enc) as cacheout:
+        log = mismatch_finder(base, target)
+        with open(cachepath, 'w', encoding=target.encoding) as cacheout:
             json.dump(log, cacheout)
 
-    for comment in log["_stats_"]:
-        print(comment)
+    if args.verbosity:
+        print("Total lines:   {}".format(log["_lines_"]))
+        print("Total pairs:   {}".format(log["_pairs_"]))
+        print("Matches: {} (from {} lines)".format(log["_flags_"], len(log)-1))
 
     #log formatting for readability
-    log.pop("_stats_")
+    for stat in ('_flags_', '_lines', '_pairs_'):
+        log.pop(stat, None)
     for line_eng in log:
         width_max = max(map(len, log[line_eng].keys()))
         lines_fmt = []
@@ -116,5 +106,8 @@ if __name__ == '__main__':
         log[line_eng] = lines_fmt
 
     with open('mf-{}.json'.format(args.target),
-              'w', encoding=target_enc) as flog:
-        json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)
+              'w', encoding=target.encoding) as flog:
+        try:
+            json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)
+        except NameError:
+            json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)

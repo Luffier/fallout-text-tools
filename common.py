@@ -2,14 +2,14 @@ import os, sys, shutil, fnmatch
 from os.path import basename
 
 #returns a list of the folder names in the target path minus excluded and
-#folders with no .msg files down the directory tree
+#folders with no .MSG files down the directory tree
 def listdirs(path='.', excluded=[]):
     excluded.append('__pycache__')
     thedirs = next(os.walk(path))[1] #os.walk() returns root, dirs [1], files
     thedirs = [adir for adir in thedirs if adir not in excluded]
     for adir in thedirs:
         for root, dirs, files in os.walk(adir):
-            if fnmatch.filter(files, '*.msg'):
+            if fnmatch.filter(files, '*.MSG'):
                 break
             else:
                 thedirs.remove(adir)
@@ -17,7 +17,7 @@ def listdirs(path='.', excluded=[]):
 
 #returns a list of the files (absolute paths) in the target path that match
 #the file_filter pattern and aren't in a excluded dir
-def pathfinder(path='.', excluded=[], file_filter='*.msg'):
+def pathfinder(path='.', excluded=[], file_filter='*.MSG'):
     filespaths = []
     excluded.append('__pycache__')
     for root, dirs, files in os.walk(path, topdown=True):
