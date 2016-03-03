@@ -53,6 +53,7 @@ coverage.xml
 docs/_build/
 
 # Testing
+lang/
 test.py
 editor.py
 data.py
