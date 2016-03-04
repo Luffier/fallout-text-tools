@@ -7,7 +7,6 @@ lines that haven't changed. You could use  a slightly lower value to retain
 lines with negligible changes. Creates a log of missing files and lines."""
 import re, sys
 from os.path import join, isdir, isfile, splitext, basename
-from collections import namedtuple
 import common
 try:
     import ujson as json
@@ -92,11 +91,12 @@ class Lang:
         return lines
 
     #global form structure: {"filename|index": "string"}
-    def global_parser(self):
+    def global_parser(self, complete=True):
         lines = {}
         for filename in self.data:
             for index in self.data[filename]:
-                lines[filename + "|" + str(index)] = self.data[filename][index]
+                if not complete and self.data[filename][index]:
+                    lines[filename+'|'+str(index)] = self.data[filename][index]
         return lines
 
     #removes any filename and index not present in another Lang object

@@ -26,8 +26,8 @@ def mismatch_finder(base, target):
     target.purge_with(base)
     target.purge_with(base, limiter=['pipboy'])
 
-    base_global = base.global_parser()
-    target_global = target.global_parser()
+    base_global = base.global_parser(complete=False)
+    target_global = target.global_parser(complete=False)
 
     #log structure: {"line_eng": {"line_loc": {"filename": [index]}}}
     log = {}
@@ -88,15 +88,16 @@ if __name__ == '__main__':
         print("Matches: {} (from {} lines)".format(log["_flags_"], len(log)-1))
 
     #log formatting for readability
-    for stat in ('_flags_', '_lines', '_pairs_'):
-        log.pop(stat, None)
+    for stat in ['_flags_', '_lines_', '_pairs_']:
+        log.pop(stat)
     for line_eng in log:
         width_max = max(map(len, log[line_eng].keys()))
+        width_max = max(width_max, len(line_eng))
         lines_fmt = []
         for line_loc in list(log[line_eng]):
             line_fmt = ""
             line_fmt += "{}".format(line_loc.replace('\n',''))
-            width = width_max - len(line_loc) + 4
+            width = width_max - len(line_loc) + 2
             for filename in log[line_eng][line_loc]:
                 line_fmt += width * " " + "{}".format(filename)
                 for index in log[line_eng][line_loc][filename]:
