@@ -39,15 +39,13 @@ removes line breaks, essential for the syntax_checker
 spots ugly crash-inducing bugs
 
 ### lazy_town.py
-makes unmantained localizations usable by "injecting" the new content in English
+makes unmaintained localizations usable by "injecting" good lines (based on
+their similarity ratio -using Levenshtein distance-) into the Fixt files
 
 ### mismatch_finder.py
 looks for lines that should be same but aren't (translators fault)
 
 ### similarity_finder.py
 ongoing project for creating a usable database of lines based on their
-similarity ratio (Levenshtein distance). This would speed the localization
-process in the future and could work as a loose mismatch_finder.py
-
-### merger.py (outdated; do not use)
-merges all files into a big one, for mass spell checking
+similarity ratio. This would speed the localization process in the future and
+could work as a loose mismatch_finder.py
