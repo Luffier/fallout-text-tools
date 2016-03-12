@@ -1,19 +1,19 @@
-"""Makes the target localization files compatible with the latest Fixt update,
-the result will be a mixture of English and the target language. Levenshtein
-algorithm is used (if you don't have python-Levenshtein, difflib will be used,
-and its results tend to be very different). You can change the default
-threshold of 1 (lower similarity ratio). At a value of 1, it would only copie
-lines that haven't changed. You could use  a slightly lower value to retain
-lines with negligible changes. Creates a log of missing files and lines."""
 import re, sys
 from os.path import join, isdir, isfile, splitext, basename
+from math import ceil
 import common
 try:
     import ujson as json
 except ImportError:
     import json
     print("** ujson module not found, using json instead **")
-
+try:
+    from Levenshtein import ratio
+except ImportError:
+    import difflib
+    def ratio(string1, string2):
+        return difflib.SequenceMatcher(None, string1, string2).ratio()
+    print("** python-Levenshtein module not found, using difflib instead **")
 
 class Lang:
 
@@ -22,15 +22,11 @@ class Lang:
     cacheroot = join('.', 'ftt-cache')
 
     def __init__(self, dirpath, clearcache=False):
-        if not isdir(dirpath):
-            raise ValueError("The directory doesn't exist")
         self.dirpath = dirpath
         self.dirname = basename(self.dirpath)
         self.clearcache = clearcache
         self.encoding = common.encfinder(self.dirname)
         self.filepaths = self.getfilepaths()
-        if not self.filepaths:
-            raise ValueError("There aren't any .MSG files")
         self.data = self.getdata()
         self.purged = {}
 
@@ -43,14 +39,53 @@ class Lang:
     def __iter__(self):
         return iter(self.data)
 
+    #number of files
     def __len__(self):
-        return len(self.filepaths)
+        return len(self.data)
+
+    #number of lines (with or without empty lines)
+    def size(self, complete=True):
+        if complete:
+            return sum(len(f) for f in self.data.values())
+        else:
+            return sum(1 for c in self.data.values() for l in c.values() if l)
 
     def get(self, key, default=None):
         return self.data.get(key, default)
 
+    def getline(self, filename, index):
+        try:
+            return self.data[filename][index]
+        except KeyError:
+            return None
+
     def pop(self, key, default=None):
         return self.data.pop(key, default)
+
+    def setdefault(self, key, default=None):
+        self.data.setdefault(key, default)
+
+    def search(self, line, first_match=True):
+        search_result = []
+        for filename in self.data:
+            for index in self.data[filename]:
+                if line == self.data[filename][index]:
+                    if first_match:
+                        return (filename, index)
+                    else:
+                        search_result.append((filename, index))
+        return search_result
+
+    def search_similar(self, line, thd=0.5):
+        search_result = {}
+        for filename in self.data:
+            for index in self.data[filename]:
+                line_ratio = ratio(line, self.data[filename][index])
+                if line_ratio >= thd:
+                    line_ratio = round(line_ratio * 100)
+                    search_result.setdefault(line_ratio, [])
+                    search_result[line_ratio].append((filename, index))
+        return search_result
 
     #filepaths structure: {"filename": "filepath"}
     def getfilepaths(self):
@@ -113,6 +148,7 @@ class Lang:
                 if filename not in lang:
                     self.purged[lang.dirname][filename] = ["*MISSING FILE*"]
                     self.data.pop(filename)
+                    self.filepaths.pop(filename)
                 else:
                     for index in list(self.data[filename]):
                         if index not in lang[filename]:
