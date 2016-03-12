@@ -53,13 +53,21 @@ coverage.xml
 docs/_build/
 
 # Testing
-lang/
+lang*/
+lt/
+/*/
 test.py
 editor.py
 data.py
+_*.py
 *2.py
 *.msg
 *.txt
 *.sve
 *.json
+*.pal
+*.aaf
+*.fon
+*.cfg
+*.isl
 *.tmp
