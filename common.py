@@ -27,21 +27,22 @@ def pathfinder(path='.', excluded=[], file_filter='*.MSG'):
     return filespaths
 
 #returns the encoding of a given folder name based on a dictionary of known
-#languages keywords and their respective encoding (not guessing involved)
+#languages keywords and their respective encoding
 def encfinder(dirname):
     encoding = None
     codec_lib = {
-    'cp1252' : ['english', 'english_base', 'english_fixt', 'french', 'german',
-                'italian','spanish_base', 'spanish_female', 'spanish_male'],
+    'cp1252' : ['english', 'french', 'german', 'italian', 'spanish'],
     'latin2' : ['hungarian'],
     'cp866'  : ['russian_fargus'],
     'cp1251' : ['russian_1c'],
     'cp1250' : ['czech', 'polish'],
     'gb18030': ['chinese']}
-    for codec, lang_keyword in codec_lib.items():
-        if dirname.lower() in lang_keyword:
-            encoding = codec
-            break
+
+    for codec, keywords in codec_lib.items():
+        for keyword in keywords:
+            if keyword in dirname.lower():
+                encoding = codec
+                break
 
     if not encoding:
         print("Couldn't find the codec for {}".format(dirname))

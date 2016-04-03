@@ -146,7 +146,8 @@ if __name__ == '__main__':
     par.add_argument("-e", "--excluded", nargs="*",
                      default=['fke_dude.msg', 'democomp.msg', 'deadcomp.msg'],
                      help="List of excluded files (use lowercase, extension \
-                     and separate with spaces)")
+                     and separate with spaces). If you don't want to exclude \
+                     anything, write it alone")
     args = par.parse_args()
 
     targetpath = os.path.abspath(args.target)

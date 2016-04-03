@@ -1,4 +1,5 @@
 import re, sys
+from os import makedirs
 from os.path import join, isdir, isfile, splitext, basename
 from math import ceil
 import common
@@ -18,7 +19,6 @@ except ImportError:
 class Lang:
 
     line_pattern = re.compile(r'^[^\S\n]*\{([0-9]+)\}\{(?:.*)\}\{([^{]*)\}')
-    id_pattern = re.compile(r'^(.+)\|([0-9]+)$')
     cacheroot = join('.', 'ftt-cache')
 
     def __init__(self, dirpath, clearcache=False):
@@ -65,6 +65,7 @@ class Lang:
     def setdefault(self, key, default=None):
         self.data.setdefault(key, default)
 
+    #search result structure: ("filename", "index") or a list
     def search(self, line, first_match=True):
         search_result = []
         for filename in self.data:
@@ -76,6 +77,7 @@ class Lang:
                         search_result.append((filename, index))
         return search_result
 
+    #search result structure: {ratio: [("filename", "index")]}
     def search_similar(self, line, thd=0.5):
         search_result = {}
         for filename in self.data:
@@ -99,6 +101,7 @@ class Lang:
     def getdata(self):
         cachepath = join(Lang.cacheroot, '{}.json'.format(self.dirname))
         if not isfile(cachepath) or self.clearcache:
+            makedirs(Lang.cacheroot, exist_ok=True)
             files = {}
             for filename, filepath in self.filepaths.items():
                 rawlines = common.readlines(filepath, self.encoding)
@@ -111,14 +114,14 @@ class Lang:
             with open(cachepath, 'r') as cachein:
                 return json.load(cachein)
 
-    #data structure: {"filename": {index: "string"}}
+    #data structure: {"filename": {"index": "string"}}
     def parser(self, rawlines):
         lines = {}
         for rawline in rawlines:
             if Lang.line_pattern.search(rawline):
                 try:
                     line_sections = Lang.line_pattern.search(rawline).groups()
-                    index = int(line_sections[0])
+                    index = line_sections[0]
                     content = line_sections[1]
                     lines[index] = content
                 except (IndexError, AttributeError):
@@ -130,8 +133,8 @@ class Lang:
         lines = {}
         for filename in self.data:
             for index in self.data[filename]:
-                if not complete and self.data[filename][index]:
-                    lines[filename+'|'+str(index)] = self.data[filename][index]
+                if complete or self.data[filename][index]:
+                    lines[filename+'|'+ index] = self.data[filename][index]
         return lines
 
     #removes any filename and index not present in another Lang object

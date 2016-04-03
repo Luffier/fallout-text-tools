@@ -2,7 +2,7 @@
 the target language, helpfull for spoting inaccuracies and mantain a consistent
 localization. The results use the JSON format (formatted for readability)."""
 import os, sys, argparse
-from math import factorial as fact
+from math import factorial
 from itertools import combinations
 from os.path import join, isfile, abspath
 import common
@@ -23,13 +23,12 @@ def mismatch_finder(base, target):
     #the indices in PIPBOY.MSG are dynamic (currently using this feature in the
     #SPANISH localization). It would raise a KeyError exception when it tries
     #to use those unique PIPBOY addresses in the Fixt dict.
-    target.purge_with(base)
     target.purge_with(base, limiter=['pipboy'])
 
     base_global = base.global_parser(complete=False)
     target_global = target.global_parser(complete=False)
 
-    #log structure: {"line_eng": {"line_loc": {"filename": [index]}}}
+    #log structure: {"line_eng": {"line_loc": {"filename": ["index"]}}}
     log = {}
     flags = 0
     for address1, address2 in combinations(target_global, 2):
@@ -38,7 +37,7 @@ def mismatch_finder(base, target):
                 line_eng = base_global[address1]
                 for address in (address1, address2):
                     line_loc = target_global[address]
-                    filename, index = Lang.id_pattern.search(address).groups()
+                    filename, index = address.split('|')
                     log.setdefault(line_eng, {})
                     log[line_eng].setdefault(line_loc, {})
                     log[line_eng][line_loc].setdefault(filename, [])
@@ -48,7 +47,7 @@ def mismatch_finder(base, target):
 
     line_count = len(target_global)
     log["_flags_"] = flags
-    log["_pairs_"] = fact(line_count) // (2*fact(line_count-2))
+    log["_pairs_"] = factorial(line_count) // (2*factorial(line_count-2))
     log["_lines_"] = line_count
 
     return log
@@ -108,7 +107,4 @@ if __name__ == '__main__':
 
     with open('mf-{}.json'.format(args.target),
               'w', encoding=target.encoding) as flog:
-        try:
-            json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)
-        except NameError:
-            json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)
+        json.dump(log, flog, ensure_ascii=False, indent=4, sort_keys=True)

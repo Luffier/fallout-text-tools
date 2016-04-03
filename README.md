@@ -12,18 +12,35 @@ You'll need to install version 3.5 (or higher) of Python.
 Download here: http://www.python.org/download/
 
 Although they are optional, you should also install both ```python-Levenshtein```
-and ```ujson```. You can do this via cmd with the following lines:
+and ```ujson```. You can do this via ```cmd``` with the following lines:
 ```
-pip install python-Levenshtein
-pip install ujson
+pip install ujson python-Levenshtein
 ```
+
+In case ```pip``` gives you an error (this usually means you don't have the
+required compiler), you can use the binaries at:
+http://www.lfd.uci.edu/~gohlke/pythonlibs/
+
+For this, first upgrade pip:
+```
+python -m pip install --upgrade pip
+```
+
+And then use ```pip install``` followed by the ```.whl``` file path.
+
 
 
 ## General instructions
 
 If the files don't have a correct syntax everything will most likely explode, so
 a good practice would be to run syntax_checker every time you make a change on
-the files. Every script now uses a command-line interface.
+the files.
+
+Any module that uses lang.py (lazy_town, mismatch_finder and
+similarity_finder) needs the files to be clear of line breaks (use
+linebreak_remover with the parameter ```-e```).
+
+Every script now uses a command-line interface.
 
 
 ## Scripts
@@ -48,4 +65,4 @@ looks for lines that should be same but aren't (translators fault)
 ### similarity_finder.py
 ongoing project for creating a usable database of lines based on their
 similarity ratio. This would speed the localization process in the future and
-could work as a loose mismatch_finder.py
+could work as a kind of translation memory.

@@ -97,10 +97,10 @@ def injector(lang, dirpath, base_encoding):
         for line in lines:
             if Lang.line_pattern.search(line):
                 line_sections = Lang.line_pattern.search(line)
-                index = int(line_sections.group(1))
+                index = line_sections.group(1)
                 if (index in lang[filename]) and line_sections.group(2):
                     line = (line[:line_sections.start(2)] +
-                            str(lang[filename][index])    +
+                            lang[filename][index]         +
                             line[line_sections.end(2):])
                 text_out += line
             else:
