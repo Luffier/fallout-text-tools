@@ -54,9 +54,13 @@ docs/_build/
 
 # Testing
 /*/
+icono.ico
+venv.py
 test.py
 editor.py
 data.py
+*.exe
+*.spec
 _*.py
 *2.py
 *.msg

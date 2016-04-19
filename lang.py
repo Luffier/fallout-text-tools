@@ -37,7 +37,9 @@ class Lang:
         self.data[filename] = value
 
     def __iter__(self):
-        return iter(self.data)
+        for filename in self.data:
+            for line in self.data[filename].values():
+                yield line
 
     #number of files
     def __len__(self):
@@ -53,24 +55,26 @@ class Lang:
     def get(self, key, default=None):
         return self.data.get(key, default)
 
-    def getline(self, filename, index):
-        try:
-            return self.data[filename][index]
-        except KeyError:
-            return None
-
     def pop(self, key, default=None):
         return self.data.pop(key, default)
 
     def setdefault(self, key, default=None):
         self.data.setdefault(key, default)
 
+    def getline(self, filename, index):
+        try:
+            return self.data[filename][index]
+        except KeyError:
+            return None
+
     #search result structure: ("filename", "index") or a list
-    def search(self, line, first_match=True):
+    def search(self, pattern, first_match=True):
         search_result = []
+        search_pattern = re.compile(pattern)
         for filename in self.data:
             for index in self.data[filename]:
-                if line == self.data[filename][index]:
+                match = search_pattern.search(self.data[filename][index])
+                if match:
                     if first_match:
                         return (filename, index)
                     else:
@@ -118,9 +122,9 @@ class Lang:
     def parser(self, rawlines):
         lines = {}
         for rawline in rawlines:
-            if Lang.line_pattern.search(rawline):
+            if self.line_pattern.search(rawline):
                 try:
-                    line_sections = Lang.line_pattern.search(rawline).groups()
+                    line_sections = self.line_pattern.search(rawline).groups()
                     index = line_sections[0]
                     content = line_sections[1]
                     lines[index] = content
